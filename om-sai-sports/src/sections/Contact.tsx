@@ -1,0 +1,10 @@
+import {useState} from "react";
+import type {FormEvent} from "react";
+import {ArrowUpRight,MapPin,Phone,Mail} from "lucide-react";
+export default function Contact(){
+ const [form,setForm]=useState({name:"",phone:"",message:"",designId:""});
+ const wa=import.meta.env.VITE_WHATSAPP_NUMBER||"919999999999";
+ const submit=(e:FormEvent)=>{e.preventDefault();const msg=`Hello OM SAI SPORTS, my name is ${form.name}. Phone: ${form.phone}. ${form.message} ${form.designId?`Design ID: ${form.designId}`:""}`;window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`,"_blank","noopener,noreferrer")};
+ return <section id="contact" className="contact-section"><div className="contact-inner"><div><span className="eyebrow">YOUR TEAM, YOUR STORY / 07</span><h2>Let’s make<br/><em>yours.</em></h2><p>Have a team in mind? Tell us what you’re imagining. We’ll take it from there.</p><div className="contact-details"><a href={`tel:${import.meta.env.VITE_CONTACT_PHONE||"+91"}`}><Phone/> {import.meta.env.VITE_CONTACT_PHONE||"+91 XXXXX XXXXX"}</a><a href={`mailto:${import.meta.env.VITE_CONTACT_EMAIL||"hello@omsaisports.in"}`}><Mail/> {import.meta.env.VITE_CONTACT_EMAIL||"hello@omsaisports.in"}</a><span><MapPin/> Navi Mumbai, Maharashtra, India</span></div></div>
+ <form className="contact-form" onSubmit={submit}><label>Your name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Name"/></label><label>Phone number<input required value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="+91"/></label><label>What do you have in mind?<textarea required rows={3} value={form.message} onChange={e=>setForm({...form,message:e.target.value})} placeholder="Tell us about your team..."/></label><label>Design ID (optional)<input value={form.designId} onChange={e=>setForm({...form,designId:e.target.value})} placeholder="OSS-0123"/></label><button className="button button-orange" type="submit">Send on WhatsApp <ArrowUpRight size={17}/></button><small>Opens WhatsApp with your message ready to send.</small></form></div></section>
+}

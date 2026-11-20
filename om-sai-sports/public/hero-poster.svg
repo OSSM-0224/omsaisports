@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Dark burnt-orange silk folds">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0C0C0D"/>
+      <stop offset=".55" stop-color="#130D0A"/>
+      <stop offset="1" stop-color="#0C0C0D"/>
+    </linearGradient>
+    <radialGradient id="warm" cx=".7" cy=".36" r=".62">
+      <stop offset="0" stop-color="#A33A00" stop-opacity=".92"/>
+      <stop offset=".42" stop-color="#7A2A00" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#7A2A00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="core" cx=".73" cy=".33" r=".33">
+      <stop offset="0" stop-color="#FF5A00" stop-opacity=".72"/>
+      <stop offset=".5" stop-color="#FF5A00" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#FF5A00" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fold-a" x1=".1" y1=".2" x2=".9" y2=".8">
+      <stop offset="0" stop-color="#7A2A00" stop-opacity="0"/>
+      <stop offset=".32" stop-color="#B33B00" stop-opacity=".55"/>
+      <stop offset=".62" stop-color="#FF5A00" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#7A2A00" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fold-b" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0C0C0D" stop-opacity=".9"/>
+      <stop offset=".38" stop-color="#7A2A00" stop-opacity=".62"/>
+      <stop offset=".68" stop-color="#E24E00" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#0C0C0D" stop-opacity=".8"/>
+    </linearGradient>
+    <linearGradient id="crease" x1="0" y1="0" x2="1" y2=".2">
+      <stop offset="0" stop-color="#FF5A00" stop-opacity="0"/>
+      <stop offset=".45" stop-color="#FFD9BC" stop-opacity=".32"/>
+      <stop offset=".58" stop-color="#FF8A3D" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#FF5A00" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="left-fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0C0C0D" stop-opacity=".97"/>
+      <stop offset=".28" stop-color="#0C0C0D" stop-opacity=".72"/>
+      <stop offset=".58" stop-color="#0C0C0D" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#0C0C0D" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bottom-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset=".55" stop-color="#0C0C0D" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0C0C0D" stop-opacity=".96"/>
+    </linearGradient>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="34"/>
+    </filter>
+    <filter id="softer" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="58"/>
+    </filter>
+    <filter id="edge" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#base)"/>
+  <rect width="1920" height="1080" fill="url(#warm)"/>
+  <rect width="1920" height="1080" fill="url(#core)"/>
+
+  <g filter="url(#softer)">
+    <path d="M-280 880C110 690 270 930 570 780C860 635 980 380 1280 330C1530 288 1690 420 1940 330L1940 1180L-280 1180Z" fill="url(#fold-a)" opacity=".8"/>
+    <path d="M-180 210C180 380 360 190 690 300C980 396 1120 640 1450 660C1650 672 1810 590 1980 610L1980 -120L-180 -120Z" fill="#7A2A00" opacity=".22"/>
+  </g>
+
+  <g filter="url(#soft)">
+    <path d="M-120 960C210 760 420 900 720 720C1020 540 1120 270 1420 250C1660 234 1830 360 2040 300L2040 1120L-120 1120Z" fill="url(#fold-b)" opacity=".82"/>
+    <path d="M-60 480C240 620 470 520 740 610C1000 696 1210 890 1510 860C1710 840 1840 760 2010 790L2010 1120L-60 1120Z" fill="#4D1900" opacity=".46"/>
+    <ellipse cx="1390" cy="400" rx="430" ry="250" fill="#FF5A00" opacity=".16" transform="rotate(-18 1390 400)"/>
+  </g>
+
+  <g filter="url(#edge)" fill="none" stroke-linecap="round">
+    <path d="M250 760C530 640 690 760 930 640C1170 520 1260 350 1530 330" stroke="url(#crease)" stroke-width="4" opacity=".75"/>
+    <path d="M400 900C680 780 860 880 1120 740C1370 606 1510 470 1810 500" stroke="url(#crease)" stroke-width="2.5" opacity=".4"/>
+    <path d="M520 300C700 370 830 280 1040 360C1240 436 1370 570 1640 560" stroke="#FF5A00" stroke-width="2" opacity=".2"/>
+    <path d="M180 640C420 690 610 610 820 690" stroke="#FFB07A" stroke-width="2" opacity=".16"/>
+  </g>
+
+  <g filter="url(#softer)">
+    <ellipse cx="1320" cy="360" rx="210" ry="110" fill="#FFD2AE" opacity=".12" transform="rotate(-24 1320 360)"/>
+    <ellipse cx="1570" cy="590" rx="300" ry="160" fill="#FF5A00" opacity=".12" transform="rotate(-12 1570 590)"/>
+  </g>
+
+  <rect width="1920" height="1080" fill="url(#left-fade)"/>
+  <rect width="1920" height="1080" fill="url(#bottom-fade)"/>
+  <rect width="1920" height="1080" fill="#0C0C0D" opacity=".08"/>
+</svg>
