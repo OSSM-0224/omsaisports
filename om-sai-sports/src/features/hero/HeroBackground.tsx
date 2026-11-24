@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, type MotionValue, useReducedMotion } from "motion/react";
-import { useTheme } from "../../hooks/useTheme";
-import { HERO_DEFAULT_POSTER } from "../../lib/seedData.ts";
 import { getHeroVideoSources } from "../../lib/storage.ts";
-import type { SiteSettings } from "../../types/index";
+import type { SiteSettings } from "../../lib/siteSettings";
 
 interface HeroBackgroundProps {
-  siteSettings: SiteSettings;
+  settings: SiteSettings;
   observeTargetRef?: React.RefObject<HTMLElement | null>;
   bgScale?: MotionValue<number>;
   bgDarkenOpacity?: MotionValue<number>;
+  appearance?: "dark" | "light";
 }
 
 interface NetworkInformationLike {
@@ -170,13 +169,13 @@ function isLowBandwidthConnection(): boolean {
 }
 
 export function HeroBackground({
-  siteSettings,
+  settings,
   observeTargetRef,
   bgScale,
   bgDarkenOpacity,
+  appearance = "dark",
 }: HeroBackgroundProps) {
-  const { theme } = useTheme();
-  const isLight = theme === "light";
+  const isLight = appearance === "light";
   const isLightRef = useRef(isLight);
   isLightRef.current = isLight;
 
@@ -250,19 +249,19 @@ export function HeroBackground({
   const videoSources = useMemo(
     () =>
       getHeroVideoSources(
-        siteSettings.heroVideoUrl,
-        siteSettings.heroMobileVideoUrl,
+        settings.hero_video_url,
+        undefined,
         isSmallMobile,
       ),
-    [siteSettings.heroVideoUrl, siteSettings.heroMobileVideoUrl, isSmallMobile],
+    [settings.hero_video_url, isSmallMobile],
   );
 
-  // Plan A video applies if enabled, URL set, and on mobile only if a lighter mobile source exists
+  // Plan A video applies if enabled and a URL is set. Mobile keeps the shader.
   const shouldUseVideo =
     !posterOnly &&
-    siteSettings.heroUseVideo &&
-    Boolean(siteSettings.heroVideoUrl.trim()) &&
-    (!isSmallMobile || videoSources.hasLightMobileSource) &&
+    settings.hero_use_video &&
+    Boolean(settings.hero_video_url.trim()) &&
+    !isSmallMobile &&
     Boolean(videoSources.mp4 || videoSources.webm);
 
   // Reset video fade when source changes
@@ -467,13 +466,13 @@ export function HeroBackground({
   }, [shouldRunShader, observeTargetRef]);
 
   const activePoster =
-    siteSettings.heroPosterUrl?.trim() || HERO_DEFAULT_POSTER;
+    settings.hero_poster_url?.trim() || "/hero-poster.svg";
 
   return (
     <div
       ref={localContainerRef}
       aria-hidden="true"
-      className="absolute inset-0 z-0 overflow-hidden bg-[var(--desk)] pointer-events-none select-none"
+      className="hero-background absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
       style={{
         backgroundImage: isLight
           ? "radial-gradient(ellipse at 72% 42%, rgba(255,90,0,0.18) 0%, rgba(234,215,195,0.55) 48%, #FAF6F0 100%)"
