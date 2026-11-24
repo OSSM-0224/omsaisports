@@ -1,0 +1,326 @@
+/* OM SAI SPORTS — branded jersey cursor.
+   Cursor-only styles. Nothing here should restyle the site itself. */
+
+:root {
+  --cursor-cream: #faf6f0;
+  --cursor-ink: #14110f;
+  --cursor-orange: #ff5a00;
+  --cursor-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.cursor-thread {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  transition: opacity 160ms ease;
+}
+
+.cursor-thread.is-visible {
+  opacity: 1;
+}
+
+.cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.cursor.is-visible {
+  visibility: visible;
+}
+
+.cursor__shirt {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: clamp(32px, 3.7vw, 76px);
+  opacity: 0;
+  pointer-events: none;
+  perspective: 900px;
+  transform: translate3d(-200px, -200px, 0);
+  transition: opacity 180ms ease;
+  will-change: transform;
+}
+
+.cursor.is-visible .cursor__shirt {
+  opacity: 1;
+}
+
+.cursor__float {
+  position: relative;
+  display: block;
+  transform-origin: 52% 46%;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 16px 18px rgba(15, 15, 15, 0.18))
+    drop-shadow(0 4px 5px rgba(15, 15, 15, 0.14));
+  will-change: transform;
+}
+
+.cursor__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.cursor__body {
+  position: relative;
+  z-index: 2;
+}
+
+.cursor__sleeve {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  will-change: transform;
+}
+
+.cursor__sleeve--left {
+  transform-origin: 11.711% 25.245%;
+}
+
+.cursor__sleeve--right {
+  transform-origin: 72.79% 6.495%;
+}
+
+/* Brand crest stitched onto the jersey chest. */
+.cursor__crest {
+  position: absolute;
+  z-index: 3;
+  top: 31.5%;
+  left: 57%;
+  width: 15.5%;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  transform-origin: center;
+  opacity: 0.95;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.cursor__crest img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.28));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.cursor__crest::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 1px dashed rgba(14, 14, 14, 0.34);
+  border-radius: 3px;
+  transform: rotate(2deg);
+  opacity: 0.55;
+}
+
+.cursor.is-hovering .cursor__crest {
+  transform: translate(-50%, -50%) rotate(-1deg) scale(1.04);
+}
+
+.cursor__dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 1.5px rgba(0, 0, 0, 0.55),
+    0 1px 4px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+  transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+  will-change: transform;
+}
+
+.cursor__label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  padding: 7px 10px 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  background: var(--cursor-ink);
+  color: var(--cursor-cream);
+  box-shadow:
+    0 0 0 1px rgba(20, 17, 15, 0.2),
+    0 7px 18px rgba(0, 0, 0, 0.22);
+  font-family: var(--cursor-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(-100px, -100px, 0);
+  transition: opacity 120ms ease;
+  will-change: transform;
+}
+
+.cursor__label::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  width: 3px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 1px;
+  background: var(--cursor-orange);
+}
+
+.cursor__label.is-visible {
+  opacity: 1;
+}
+
+/* A small stitched burst on click. */
+.cursor__burst {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cursor__burst::before,
+.cursor__burst::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.18);
+}
+
+.cursor__burst::before {
+  width: 22px;
+  height: 22px;
+  border: 2px dashed var(--cursor-orange);
+}
+
+.cursor__burst::after {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 90, 0, 0.72);
+}
+
+.cursor__burst.is-active::before {
+  animation: cursor-burst 480ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.cursor__burst.is-active::after {
+  animation: cursor-burst 560ms 40ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes cursor-burst {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.18) rotate(0deg);
+  }
+  70% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.65) rotate(38deg);
+  }
+}
+
+.cursor.is-text .cursor__shirt,
+.cursor.is-text .cursor__dot,
+.cursor.is-text .cursor__label,
+.cursor.is-text .cursor__burst {
+  opacity: 0;
+  transition-duration: 90ms;
+}
+
+/* Only hide the native cursor once the custom cursor is actually active. */
+@media (hover: hover) and (pointer: fine) {
+  html.has-shirt-body,
+  html.has-shirt-body body,
+  html.has-shirt-body a,
+  html.has-shirt-body button,
+  html.has-shirt-body [role="button"],
+  html.has-shirt-body [data-cursor],
+  html.has-shirt-body label,
+  html.has-shirt-body summary {
+    cursor: none;
+  }
+
+  html.has-shirt-body input,
+  html.has-shirt-body textarea,
+  html.has-shirt-body select,
+  html.has-shirt-body [contenteditable="true"] {
+    cursor: text;
+  }
+}
+
+/* Native <dialog> lives in the browser top layer — return the native cursor. */
+html.cursor-suppressed,
+html.cursor-suppressed body,
+html.cursor-suppressed a,
+html.cursor-suppressed button,
+html.cursor-suppressed [role="button"] {
+  cursor: auto;
+}
+
+/* Touch devices keep their native cursor and never see the custom one. */
+@media (hover: none), (pointer: coarse) {
+  .cursor,
+  .cursor-thread {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor,
+  .cursor-thread {
+    display: none !important;
+  }
+
+  html.has-shirt-body,
+  html.has-shirt-body body,
+  html.has-shirt-body a,
+  html.has-shirt-body button,
+  html.has-shirt-body [role="button"],
+  html.has-shirt-body [data-cursor] {
+    cursor: auto;
+  }
+}
+
+@media print {
+  .cursor,
+  .cursor-thread {
+    display: none !important;
+  }
+
+  html.has-shirt-body * {
+    cursor: auto !important;
+  }
+}
