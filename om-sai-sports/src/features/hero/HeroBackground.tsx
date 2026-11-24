@@ -9,7 +9,8 @@ type NetworkInformationLike = {
 };
 
 function getConnection() {
-  return (navigator as Navigator & { connection?: NetworkInformationLike }).connection;
+  return (navigator as Navigator & { connection?: NetworkInformationLike })
+    .connection;
 }
 
 function dataSaverActive() {
@@ -156,7 +157,11 @@ void main() {
 }
 `;
 
-function compileShader(gl: WebGLRenderingContext, type: number, source: string) {
+function compileShader(
+  gl: WebGLRenderingContext,
+  type: number,
+  source: string,
+) {
   const shader = gl.createShader(type);
   if (!shader) return null;
   gl.shaderSource(shader, source);
@@ -183,7 +188,7 @@ function SilkCanvas() {
       antialias: false,
       depth: false,
       stencil: false,
-      powerPreference: "low-power"
+      powerPreference: "low-power",
     });
     if (!context) {
       canvas.remove();
@@ -230,7 +235,11 @@ function SilkCanvas() {
       return;
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 3, -1, -1, 3]),
+      gl.STATIC_DRAW,
+    );
 
     const position = gl.getAttribLocation(program, "a_position");
     const resolution = gl.getUniformLocation(program, "u_resolution");
@@ -294,7 +303,10 @@ function SilkCanvas() {
       let heroProgress = 0;
       if (hero) {
         const top = hero.getBoundingClientRect().top;
-        heroProgress = Math.min(1, Math.max(0, -top / Math.max(hero.clientHeight, 1)));
+        heroProgress = Math.min(
+          1,
+          Math.max(0, -top / Math.max(hero.clientHeight, 1)),
+        );
       }
 
       gl.useProgram(program);
@@ -332,11 +344,12 @@ function SilkCanvas() {
         visible = entries[0]?.isIntersecting ?? true;
         if (visible) last = performance.now();
       },
-      { rootMargin: "80px" }
+      { rootMargin: "80px" },
     );
     observer.observe(canvas);
 
-    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
+    const resizeObserver =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
     resizeObserver?.observe(canvas);
     window.addEventListener("resize", resize);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -370,11 +383,20 @@ type HeroBackgroundProps = {
   className?: string;
 };
 
-export default function HeroBackground({ settings, className = "" }: HeroBackgroundProps) {
+export default function HeroBackground({
+  settings,
+  className = "",
+}: HeroBackgroundProps) {
   const lowPower = useLowPowerMode();
-  const [pageReady, setPageReady] = useState(() => typeof document !== "undefined" && document.readyState === "complete");
-  const [posterSrc, setPosterSrc] = useState(settings.hero_poster_url.trim() || "/hero-poster.svg");
-  const [videoState, setVideoState] = useState<"idle" | "ready" | "error">("idle");
+  const [pageReady, setPageReady] = useState(
+    () => typeof document !== "undefined" && document.readyState === "complete",
+  );
+  const [posterSrc, setPosterSrc] = useState(
+    settings.hero_poster_url.trim() || "/hero-poster.svg",
+  );
+  const [videoState, setVideoState] = useState<"idle" | "ready" | "error">(
+    "idle",
+  );
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const videoSrc = settings.hero_video_url.trim();
@@ -424,7 +446,8 @@ export default function HeroBackground({ settings, className = "" }: HeroBackgro
           decoding="async"
           fetchPriority="high"
           onError={() => {
-            if (posterSrc !== "/hero-poster.svg") setPosterSrc("/hero-poster.svg");
+            if (posterSrc !== "/hero-poster.svg")
+              setPosterSrc("/hero-poster.svg");
           }}
         />
         {showShader && <SilkCanvas />}
