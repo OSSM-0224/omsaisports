@@ -77,7 +77,7 @@ export default function Hero({ designs }: { designs: Design[] }) {
       <div className="hero-copy">
         <div className="eyebrow-chip"><i /> New designs added weekly</div>
         <h1><span>WE DRESS</span><span>THE TEAM</span><span>BEHIND THE</span><span className="orange-word">VICTORY<span className="period">.</span></span></h1>
-        <p>Custom jerseys for schools, colleges &amp; clubs. Crafted at OM SAI SPORTS, Navi Mumbai region, since 2000.</p>
+        <p className="hero-lede"><span>Custom jerseys for schools, colleges &amp; clubs.</span><span>Crafted at OM SAI SPORTS, Navi Mumbai region, since 2000.</span></p>
         <div className="hero-actions"><a href="#designs" className="button button-orange">Explore designs <ArrowDownRight size={17} /></a><a href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || "919999999999"}`} className="button button-outline" target="_blank" rel="noreferrer">Chat on WhatsApp <ArrowUpRight size={16} /></a></div>
         <div className="hero-stats"><div><b>25<span>+</span></b><small>YEARS MAKING</small></div><div><b>20<span>+</span></b><small>SCHOOLS &amp; CLUBS</small></div><div><b>1000<span>s</span></b><small>JERSEYS MADE</small></div></div>
       </div>
