@@ -5,13 +5,13 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { generateNextDesignId } from "../lib/config";
+import { generateNextDesignId } from "../lib/config.ts";
 import {
   SEED_CLIENTS,
   SEED_DESIGNS,
   SEED_FACTS,
   SEED_SITE_SETTINGS,
-} from "../lib/seedData";
+} from "../lib/seedData.ts";
 import {
   loadInitialShowcaseData,
   persistClients,
@@ -19,14 +19,14 @@ import {
   persistFacts,
   persistSiteSettings,
   resetAllToSeed,
-} from "../lib/storage";
+} from "../lib/storage.ts";
 import type {
   ClientItem,
   FactItem,
   JerseyDesign,
   SiteSettings,
   ToastMessage,
-} from "../types";
+} from "../types/index";
 
 interface ShowcaseContextValue {
   designs: JerseyDesign[];

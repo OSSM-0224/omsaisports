@@ -1,167 +1,145 @@
-import { useEffect, useRef, useState } from "react";
-import type { SiteSettings } from "../../lib/siteSettings";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { motion, type MotionValue, useReducedMotion } from "motion/react";
+import { useTheme } from "../../hooks/useTheme";
+import { HERO_DEFAULT_POSTER } from "../../lib/seedData.ts";
+import { getHeroVideoSources } from "../../lib/storage.ts";
+import type { SiteSettings } from "../../types/index";
 
-type NetworkInformationLike = {
+interface HeroBackgroundProps {
+  siteSettings: SiteSettings;
+  observeTargetRef?: React.RefObject<HTMLElement | null>;
+  bgScale?: MotionValue<number>;
+  bgDarkenOpacity?: MotionValue<number>;
+}
+
+interface NetworkInformationLike {
   saveData?: boolean;
   effectiveType?: string;
+  downlink?: number;
   addEventListener?: (type: string, listener: () => void) => void;
   removeEventListener?: (type: string, listener: () => void) => void;
-};
-
-function getConnection() {
-  return (navigator as Navigator & { connection?: NetworkInformationLike })
-    .connection;
 }
 
-function dataSaverActive() {
-  const connection = getConnection();
-  if (!connection) return false;
-  if (connection.saveData) return true;
-  return ["slow-2g", "2g", "3g"].includes(connection.effectiveType ?? "");
-}
-
-function useLowPowerMode() {
-  const [reducedMotion, setReducedMotion] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  });
-  const [dataSaver, setDataSaver] = useState(dataSaverActive);
-
-  useEffect(() => {
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChangeMotion = () => setReducedMotion(motion.matches);
-    motion.addEventListener?.("change", onChangeMotion);
-
-    const connection = getConnection();
-    const onChangeConnection = () => setDataSaver(dataSaverActive());
-    connection?.addEventListener?.("change", onChangeConnection);
-
-    return () => {
-      motion.removeEventListener?.("change", onChangeMotion);
-      connection?.removeEventListener?.("change", onChangeConnection);
-    };
-  }, []);
-
-  return reducedMotion || dataSaver;
-}
-
-const VERTEX_SHADER = `
-attribute vec2 a_position;
-varying vec2 v_uv;
-void main() {
-  v_uv = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}
+const VERTEX_SHADER_SRC = `
+  attribute vec2 a_position;
+  void main() {
+    gl_Position = vec4(a_position, 0.0, 1.0);
+  }
 `;
 
-const FRAGMENT_SHADER = `
-#ifdef GL_FRAGMENT_PRECISION_HIGH
-precision highp float;
-#else
-precision mediump float;
-#endif
+const FRAGMENT_SHADER_SRC = `
+  precision mediump float;
 
-uniform vec2 u_resolution;
-uniform float u_time;
-uniform float u_scroll;
-varying vec2 v_uv;
+  uniform vec2 u_resolution;
+  uniform float u_time;
+  uniform float u_isLight;
 
-vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
 
-float snoise(vec2 v) {
-  const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-  vec2 i = floor(v + dot(v, C.yy));
-  vec2 x0 = v - i + dot(i, C.xx);
-  vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-  vec4 x12 = x0.xyxy + C.xxzz;
-  x12.xy -= i1;
-  i = mod(i, 289.0);
-  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-  vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
-  m = m * m;
-  m = m * m;
-  vec3 x = 2.0 * fract(p * C.www) - 1.0;
-  vec3 h = abs(x) - 0.5;
-  vec3 ox = floor(x + 0.5);
-  vec3 a0 = x - ox;
-  m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
-  vec3 g;
-  g.x = a0.x * x0.x + h.x * x0.y;
-  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-  return 130.0 * dot(m, g);
-}
+  // 2D Simplex noise
+  float snoise(vec2 v) {
+    const vec4 C = vec4(
+      0.211324865405187,
+      0.366025403784439,
+     -0.577350269189626,
+      0.024390243902439
+    );
+    vec2 i = floor(v + dot(v, C.yy));
+    vec2 x0 = v - i + dot(i, C.xx);
+    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+    i = mod289(i);
+    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+    vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+    m = m * m;
+    m = m * m;
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 ox = floor(x + 0.5);
+    vec3 a0 = x - ox;
+    m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+    vec3 g;
+    g.x = a0.x * x0.x + h.x * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+  }
 
-float fbm(vec2 p) {
-  float sum = 0.0;
-  sum += 0.68 * snoise(p);
-  sum += 0.32 * snoise(p * 2.03 + 13.1);
-  return sum;
-}
+  float heightField(vec2 p, float t) {
+    float n1 = snoise(p * 1.15 + vec2(t * 0.42, -t * 0.28));
+    float n2 = snoise(p * 2.15 + vec2(-t * 0.30, t * 0.22));
+    float foldA = sin(p.x * 2.5 + p.y * 1.45 + t * 0.85 + n1 * 1.55);
+    float foldB = sin(p.x * 4.3 - p.y * 2.35 - t * 0.55 + n2 * 1.15) * 0.52;
+    float drape = snoise(vec2(p.x * 0.75 + p.y * 0.6, p.y * 0.85) + t * 0.16) * 0.48;
+    return foldA * 0.60 + foldB * 0.36 + drape * 0.34;
+  }
 
-float cloth(vec2 p, float t) {
-  float warp = fbm(p * 0.85 + vec2(t * 0.36, -t * 0.24));
-  vec2 q = p + vec2(warp * 0.42, warp * 0.2);
-  q += vec2(sin(q.y * 1.4 + t * 0.8), cos(q.x * 1.2 - t * 0.7)) * 0.12;
-  float h = sin(q.x * 2.35 + q.y * 1.05 + t * 1.1) * 0.46;
-  h += sin(q.y * 3.9 - q.x * 1.7 - t * 0.82) * 0.27;
-  h += sin((q.x + q.y) * 4.9 + t * 0.55) * 0.11;
-  h += fbm(q * 1.75 + vec2(-t * 0.5, t * 0.32)) * 0.5;
-  return h;
-}
+  float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
 
-void main() {
-  float aspect = u_resolution.x / max(u_resolution.y, 1.0);
-  vec2 p = vec2((v_uv.x - 0.5) * aspect, v_uv.y - 0.5) * 1.85;
-  float t = u_time * 0.05 + u_scroll * 0.5;
+  void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    float aspect = u_resolution.x / max(u_resolution.y, 1.0);
+    vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
+    p *= 1.65;
 
-  float h = cloth(p, t);
-  float e = 0.0055;
-  float hx = cloth(p + vec2(e, 0.0), t) - h;
-  float hy = cloth(p + vec2(0.0, e), t) - h;
-  vec3 n = normalize(vec3(-hx / e * 0.055, -hy / e * 0.055, 1.0));
+    float t = u_time;
+    float eps = 0.0085;
+    float h = heightField(p, t);
+    float hx = heightField(p + vec2(eps, 0.0), t);
+    float hy = heightField(p + vec2(0.0, eps), t);
 
-  vec3 lightA = normalize(vec3(-0.55, 0.72, 0.6));
-  vec3 lightB = normalize(vec3(0.7, 0.2, 0.45));
-  vec3 viewDir = vec3(0.0, 0.0, 1.0);
+    // Derive surface normal from finite differences
+    vec3 normal = normalize(vec3((h - hx) / eps * 0.28, (h - hy) / eps * 0.28, 1.0));
+    vec3 lightDir = normalize(vec3(0.58, 0.42, 0.70));
+    vec3 viewDir = vec3(0.0, 0.0, 1.0);
+    vec3 halfVec = normalize(lightDir + viewDir);
 
-  float diffA = clamp(dot(n, lightA), 0.0, 1.0);
-  float diffB = clamp(dot(n, lightB), 0.0, 1.0);
-  float sharp = pow(clamp(dot(n, normalize(lightA + viewDir)), 0.0, 1.0), 38.0);
-  float sheen = pow(clamp(dot(n, normalize(lightB + viewDir)), 0.0, 1.0), 7.0);
+    float wrapDiffuse = clamp(dot(normal, lightDir) * 0.52 + 0.48, 0.0, 1.0);
+    float diffuse = pow(wrapDiffuse, 2.0);
+    float sheen = pow(max(dot(normal, halfVec), 0.0), 16.0);
+    float peak = pow(max(dot(normal, halfVec), 0.0), 64.0);
 
-  float lum = clamp(diffA * 0.62 + diffB * 0.22 + h * 0.18 + 0.08, 0.0, 1.0);
+    // Subtle right-side composition bias so headline stays darker on the left
+    float rightBias = smoothstep(-0.25, 0.85, uv.x);
 
-  vec3 cBlack = vec3(0.047, 0.047, 0.051);
-  vec3 cBurnt = vec3(0.478, 0.165, 0.0);
-  vec3 cOrange = vec3(1.0, 0.353, 0.0);
-  vec3 cCream = vec3(1.0, 0.925, 0.815);
+    vec3 colBlack = vec3(0.047, 0.047, 0.051);      // #0C0C0D
+    vec3 colBurnt = vec3(0.478, 0.165, 0.0);        // #7A2A00
+    vec3 colOrange = vec3(1.0, 0.353, 0.0);         // #FF5A00
+    vec3 colCream = vec3(0.957, 0.937, 0.902);      // #F4EFE6
 
-  vec3 color = mix(cBlack, cBurnt, smoothstep(0.1, 0.58, lum));
-  color = mix(color, cOrange, smoothstep(0.55, 0.92, lum) * 0.92);
-  color += cOrange * sheen * 0.12;
-  color = mix(color, cCream, smoothstep(0.72, 1.0, sharp) * 0.15);
+    vec3 darkColor = mix(colBlack, colBurnt, diffuse * (0.45 + 0.55 * rightBias));
+    darkColor = mix(darkColor, colOrange, sheen * (0.42 + 0.46 * rightBias));
+    darkColor = mix(darkColor, colCream, peak * 0.13 * rightBias);
 
-  float glow = smoothstep(1.4, 0.05, length(p - vec2(0.62, 0.08)));
-  color += cBurnt * glow * 0.42;
+    // Light mode: warm cream satin silk (#FAF6F0 -> #EAD7C3 -> #FF8A47/#FF5A00 sheen)
+    vec3 colLightBase = vec3(0.980, 0.965, 0.941);  // #FAF6F0
+    vec3 colLightFold = vec3(0.914, 0.835, 0.753);  // warm oat fold shadow
+    vec3 colLightTint = vec3(1.0, 0.62, 0.36);      // soft sunlit orange silk bounce
+    vec3 lightColor = mix(colLightBase, colLightFold, diffuse * (0.52 + 0.45 * rightBias));
+    lightColor = mix(lightColor, colLightTint, sheen * (0.35 + 0.42 * rightBias));
+    lightColor = mix(lightColor, colOrange, peak * 0.24 * rightBias);
 
-  float crease = smoothstep(0.02, 0.35, abs(hx / e) * 0.01);
-  color += cOrange * crease * 0.02;
+    vec3 color = mix(darkColor, lightColor, clamp(u_isLight, 0.0, 1.0));
 
-  float vignette = smoothstep(1.65, 0.42, length(p * vec2(0.82, 1.0)));
-  color *= mix(0.54, 1.0, vignette);
+    // Very light film grain
+    float grain = (hash12(gl_FragCoord.xy + fract(t * 7.0) * 120.0) - 0.5) * 0.022;
+    color = clamp(color + grain, 0.0, 1.0);
 
-  float grain = fract(sin(dot(gl_FragCoord.xy + u_time * 37.0, vec2(12.9898, 78.233))) * 43758.5453);
-  color += (grain - 0.5) * 0.032;
-
-  gl_FragColor = vec4(color, 1.0);
-}
+    gl_FragColor = vec4(color, 1.0);
+  }
 `;
 
 function compileShader(
   gl: WebGLRenderingContext,
   type: number,
   source: string,
-) {
+): WebGLShader | null {
   const shader = gl.createShader(type);
   if (!shader) return null;
   gl.shaderSource(shader, source);
@@ -173,305 +151,429 @@ function compileShader(
   return shader;
 }
 
-function SilkCanvas() {
-  const hostRef = useRef<HTMLDivElement>(null);
+function isLowBandwidthConnection(): boolean {
+  const nav = navigator as Navigator & { connection?: NetworkInformationLike };
+  const conn = nav.connection;
+  if (!conn) return false;
+  if (conn.saveData) return true;
+  if (
+    conn.effectiveType &&
+    ["slow-2g", "2g", "3g"].includes(conn.effectiveType)
+  ) {
+    return true;
+  }
+  return (
+    typeof conn.downlink === "number" &&
+    conn.downlink > 0 &&
+    conn.downlink < 1.5
+  );
+}
+
+export function HeroBackground({
+  siteSettings,
+  observeTargetRef,
+  bgScale,
+  bgDarkenOpacity,
+}: HeroBackgroundProps) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  const isLightRef = useRef(isLight);
+  isLightRef.current = isLight;
+
+  const prefersReducedMotion = Boolean(useReducedMotion());
+  const localContainerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const [pageLoaded, setPageLoaded] = useState<boolean>(() =>
+    typeof document !== "undefined"
+      ? document.readyState === "complete"
+      : false,
+  );
+  const [lowBandwidth, setLowBandwidth] = useState<boolean>(() =>
+    typeof navigator !== "undefined" ? isLowBandwidthConnection() : false,
+  );
+  const [isSmallMobile, setIsSmallMobile] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+  const [inView, setInView] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
+  const [shaderReady, setShaderReady] = useState(false);
+  const [webglUnavailable, setWebglUnavailable] = useState(false);
+  const [posterError, setPosterError] = useState(false);
+
+  // Wait until window load event so video/heavy hydration never blocks LCP
+  useEffect(() => {
+    if (document.readyState === "complete") {
+      setPageLoaded(true);
+      return;
+    }
+    const onLoad = () => setPageLoaded(true);
+    window.addEventListener("load", onLoad, { once: true });
+    return () => window.removeEventListener("load", onLoad);
+  }, []);
+
+  // Track viewport size & network changes
+  useEffect(() => {
+    const onResize = () => setIsSmallMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize, { passive: true });
+
+    const nav = navigator as Navigator & {
+      connection?: NetworkInformationLike;
+    };
+    const conn = nav.connection;
+    const onConnChange = () => setLowBandwidth(isLowBandwidthConnection());
+    conn?.addEventListener?.("change", onConnChange);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      conn?.removeEventListener?.("change", onConnChange);
+    };
+  }, []);
+
+  // Track whether the hero is visible in the viewport
+  useEffect(() => {
+    const target = observeTargetRef?.current || localContainerRef.current;
+    if (!target || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setInView(Boolean(entries[0]?.isIntersecting));
+      },
+      { threshold: 0.02 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [observeTargetRef]);
+
+  const posterOnly = prefersReducedMotion || lowBandwidth;
+
+  const videoSources = useMemo(
+    () =>
+      getHeroVideoSources(
+        siteSettings.heroVideoUrl,
+        siteSettings.heroMobileVideoUrl,
+        isSmallMobile,
+      ),
+    [siteSettings.heroVideoUrl, siteSettings.heroMobileVideoUrl, isSmallMobile],
+  );
+
+  // Plan A video applies if enabled, URL set, and on mobile only if a lighter mobile source exists
+  const shouldUseVideo =
+    !posterOnly &&
+    siteSettings.heroUseVideo &&
+    Boolean(siteSettings.heroVideoUrl.trim()) &&
+    (!isSmallMobile || videoSources.hasLightMobileSource) &&
+    Boolean(videoSources.mp4 || videoSources.webm);
+
+  // Reset video fade when source changes
+  useEffect(() => {
+    setVideoReady(false);
+  }, [videoSources.mp4, videoSources.webm, shouldUseVideo]);
+
+  // Pause/resume video with viewport visibility
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !shouldUseVideo || !pageLoaded) return;
+    if (inView && document.visibilityState === "visible") {
+      void video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [inView, shouldUseVideo, pageLoaded]);
+
+  // Plan B: Lightweight raw WebGL Silk Fabric Shader
+  const shouldRunShader = !posterOnly && !shouldUseVideo && !webglUnavailable;
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    const canvas = document.createElement("canvas");
-    canvas.className = "hero-canvas";
-    host.appendChild(canvas);
+    if (!shouldRunShader) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const context = canvas.getContext("webgl", {
+    const gl = canvas.getContext("webgl", {
       alpha: false,
       antialias: false,
       depth: false,
       stencil: false,
       powerPreference: "low-power",
+      preserveDrawingBuffer: false,
     });
-    if (!context) {
-      canvas.remove();
+
+    if (!gl) {
+      setWebglUnavailable(true);
       return;
     }
-    const gl = context;
 
-    const fail = () => {
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
-      canvas.remove();
-    };
-
-    const vertex = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
-    const fragment = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
-    if (!vertex || !fragment) {
-      if (vertex) gl.deleteShader(vertex);
-      if (fragment) gl.deleteShader(fragment);
-      fail();
+    const vert = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER_SRC);
+    const frag = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER_SRC);
+    if (!vert || !frag) {
+      setWebglUnavailable(true);
       return;
     }
 
     const program = gl.createProgram();
     if (!program) {
-      gl.deleteShader(vertex);
-      gl.deleteShader(fragment);
-      fail();
+      setWebglUnavailable(true);
       return;
     }
-    gl.attachShader(program, vertex);
-    gl.attachShader(program, fragment);
+
+    gl.attachShader(program, vert);
+    gl.attachShader(program, frag);
     gl.linkProgram(program);
-    gl.deleteShader(vertex);
-    gl.deleteShader(fragment);
+
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       gl.deleteProgram(program);
-      fail();
+      gl.deleteShader(vert);
+      gl.deleteShader(frag);
+      setWebglUnavailable(true);
       return;
     }
 
     const buffer = gl.createBuffer();
-    if (!buffer) {
-      gl.deleteProgram(program);
-      fail();
-      return;
-    }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array([-1, -1, 3, -1, -1, 3]),
+      new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
       gl.STATIC_DRAW,
     );
 
-    const position = gl.getAttribLocation(program, "a_position");
-    const resolution = gl.getUniformLocation(program, "u_resolution");
-    const time = gl.getUniformLocation(program, "u_time");
-    const scroll = gl.getUniformLocation(program, "u_scroll");
-    if (position < 0) {
-      gl.deleteBuffer(buffer);
-      gl.deleteProgram(program);
-      fail();
-      return;
-    }
+    const positionLoc = gl.getAttribLocation(program, "a_position");
+    const resLoc = gl.getUniformLocation(program, "u_resolution");
+    const timeLoc = gl.getUniformLocation(program, "u_time");
+    const isLightLoc = gl.getUniformLocation(program, "u_isLight");
 
     gl.useProgram(program);
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-    gl.clearColor(0.047, 0.047, 0.051, 1);
+    gl.enableVertexAttribArray(positionLoc);
+    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
-    let frame = 0;
-    let visible = true;
-    let hidden = document.hidden;
-    let last = performance.now();
-    let lastDraw = 0;
-    let elapsed = 0;
-    let boost = 0;
-    let previousScroll = window.scrollY;
-    let firstFrame = true;
-
-    function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      const mobile = window.matchMedia("(max-width: 720px)").matches;
-      const quality = mobile ? 0.68 : 0.85;
-      let width = Math.max(1, Math.round(canvas.clientWidth * dpr * quality));
-      let height = Math.max(1, Math.round(canvas.clientHeight * dpr * quality));
-      const maxPixels = 2100000;
-      if (width * height > maxPixels) {
-        const scale = Math.sqrt(maxPixels / (width * height));
-        width = Math.max(1, Math.round(width * scale));
-        height = Math.max(1, Math.round(height * scale));
-      }
+    const resizeCanvas = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
+      const rawDpr = window.devicePixelRatio || 1;
+      // Cap DPR at 1.5 desktop, reduced resolution on small mobile screens
+      const dpr =
+        window.innerWidth < 768
+          ? Math.min(rawDpr, 0.85)
+          : Math.min(rawDpr, 1.5);
+      const width = Math.max(1, Math.floor(rect.width * dpr));
+      const height = Math.max(1, Math.floor(rect.height * dpr));
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
         gl.viewport(0, 0, width, height);
       }
+    };
+
+    resizeCanvas();
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(resizeCanvas)
+        : null;
+    if (resizeObserver && canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
     }
+    window.addEventListener("resize", resizeCanvas, { passive: true });
 
-    function draw(now: number) {
-      frame = requestAnimationFrame(draw);
-      const delta = Math.min((now - last) / 1000, 0.08);
-      last = now;
+    let lastScrollY = window.scrollY;
+    let scrollBoost = 0;
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      const delta = Math.abs(currentY - lastScrollY);
+      lastScrollY = currentY;
+      scrollBoost = Math.min(scrollBoost + delta * 0.00045, 0.035);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
 
-      if (!visible || hidden) return;
-      if (now - lastDraw < 32) return;
+    let isTabVisible = document.visibilityState === "visible";
+    let isVisibleInDom = inView;
+    const onVisibilityChange = () => {
+      isTabVisible = document.visibilityState === "visible";
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    let rafId = 0;
+    let lastTick = performance.now();
+    let lastDraw = 0;
+    let shaderTime = 0;
+    let firstFrameDrawn = false;
+    const FRAME_MS = 1000 / 30; // ~30fps cap
+
+    const renderFrame = (now: number) => {
+      rafId = window.requestAnimationFrame(renderFrame);
+
+      if (!isTabVisible || !isVisibleInDom) {
+        lastTick = now;
+        return;
+      }
+
+      const elapsedSinceDraw = now - lastDraw;
+      if (elapsedSinceDraw < FRAME_MS) {
+        return;
+      }
+
+      const dtSeconds = Math.min((now - lastTick) / 1000, 0.1);
+      lastTick = now;
       lastDraw = now;
 
-      resize();
-      boost *= Math.exp(-delta * 2.2);
-      elapsed += delta * (1 + boost * 2.5);
+      // Slow base motion (time * 0.05) + gentle decaying scroll speed boost
+      shaderTime += dtSeconds * 0.05 + scrollBoost;
+      scrollBoost *= 0.91;
+      if (scrollBoost < 0.0001) scrollBoost = 0;
 
-      const hero = canvas.closest(".hero");
-      let heroProgress = 0;
-      if (hero) {
-        const top = hero.getBoundingClientRect().top;
-        heroProgress = Math.min(
-          1,
-          Math.max(0, -top / Math.max(hero.clientHeight, 1)),
-        );
+      gl.uniform2f(resLoc, canvas.width, canvas.height);
+      gl.uniform1f(timeLoc, shaderTime);
+      gl.uniform1f(isLightLoc, isLightRef.current ? 1.0 : 0.0);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      if (!firstFrameDrawn) {
+        firstFrameDrawn = true;
+        setShaderReady(true);
       }
+    };
 
-      gl.useProgram(program);
-      if (resolution) gl.uniform2f(resolution, canvas.width, canvas.height);
-      if (time) gl.uniform1f(time, elapsed);
-      if (scroll) gl.uniform1f(scroll, heroProgress);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // Keep visibility synced cleanly inside closure without restarting GL context
+    const targetEl = observeTargetRef?.current || localContainerRef.current;
+    const localObserver =
+      targetEl && typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            (entries) => {
+              isVisibleInDom = Boolean(entries[0]?.isIntersecting);
+            },
+            { threshold: 0.02 },
+          )
+        : null;
+    if (localObserver && targetEl) localObserver.observe(targetEl);
 
-      if (firstFrame) {
-        firstFrame = false;
-        canvas.classList.add("is-ready");
-      }
-    }
-
-    function onScroll() {
-      const y = window.scrollY;
-      boost = Math.min(1.6, boost + Math.abs(y - previousScroll) * 0.012);
-      previousScroll = y;
-    }
-
-    function onVisibility() {
-      hidden = document.hidden;
-      if (!hidden) last = performance.now();
-    }
-
-    function onContextLost(event: Event) {
-      event.preventDefault();
-      visible = false;
-      canvas.style.opacity = "0";
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        visible = entries[0]?.isIntersecting ?? true;
-        if (visible) last = performance.now();
-      },
-      { rootMargin: "80px" },
-    );
-    observer.observe(canvas);
-
-    const resizeObserver =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
-    resizeObserver?.observe(canvas);
-    window.addEventListener("resize", resize);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    document.addEventListener("visibilitychange", onVisibility);
-    canvas.addEventListener("webglcontextlost", onContextLost);
-
-    resize();
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    frame = requestAnimationFrame(draw);
+    rafId = window.requestAnimationFrame(renderFrame);
 
     return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
+      window.cancelAnimationFrame(rafId);
       resizeObserver?.disconnect();
-      window.removeEventListener("resize", resize);
+      localObserver?.disconnect();
+      window.removeEventListener("resize", resizeCanvas);
       window.removeEventListener("scroll", onScroll);
-      document.removeEventListener("visibilitychange", onVisibility);
-      canvas.removeEventListener("webglcontextlost", onContextLost);
-      gl.deleteBuffer(buffer);
-      gl.deleteProgram(program);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
-      canvas.remove();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      try {
+        gl.deleteBuffer(buffer);
+        gl.deleteProgram(program);
+        gl.deleteShader(vert);
+        gl.deleteShader(frag);
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
+      } catch {
+        // Ignore teardown issues on already-lost context
+      }
+      setShaderReady(false);
     };
-  }, []);
+  }, [shouldRunShader, observeTargetRef]);
 
-  return <div ref={hostRef} className="hero-canvas-slot" />;
-}
-
-type HeroBackgroundProps = {
-  settings: SiteSettings;
-  className?: string;
-};
-
-export default function HeroBackground({
-  settings,
-  className = "",
-}: HeroBackgroundProps) {
-  const lowPower = useLowPowerMode();
-  const [pageReady, setPageReady] = useState(
-    () => typeof document !== "undefined" && document.readyState === "complete",
-  );
-  const [posterSrc, setPosterSrc] = useState(
-    settings.hero_poster_url.trim() || "/hero-poster.svg",
-  );
-  const [videoState, setVideoState] = useState<"idle" | "ready" | "error">(
-    "idle",
-  );
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const videoSrc = settings.hero_video_url.trim();
-  const wantsVideo = settings.hero_use_video && Boolean(videoSrc) && !lowPower;
-  const showVideo = wantsVideo && pageReady;
-  const showShader = !lowPower && (!wantsVideo || videoState === "error");
-
-  useEffect(() => {
-    setPosterSrc(settings.hero_poster_url.trim() || "/hero-poster.svg");
-  }, [settings.hero_poster_url]);
-
-  useEffect(() => {
-    setVideoState("idle");
-  }, [videoSrc, settings.hero_use_video]);
-
-  useEffect(() => {
-    if (pageReady) return;
-    const onLoad = () => setPageReady(true);
-    window.addEventListener("load", onLoad, { once: true });
-    return () => window.removeEventListener("load", onLoad);
-  }, [pageReady]);
-
-  useEffect(() => {
-    if (!showVideo) return;
-    const video = videoRef.current;
-    if (!video) return;
-    const play = () => {
-      void video.play().catch(() => setVideoState("error"));
-    };
-    video.addEventListener("canplay", play);
-    if (video.readyState >= 2) play();
-    return () => video.removeEventListener("canplay", play);
-  }, [showVideo]);
-
-  const videoType = /\.webm($|\?)/i.test(videoSrc) ? "video/webm" : "video/mp4";
+  const activePoster =
+    siteSettings.heroPosterUrl?.trim() || HERO_DEFAULT_POSTER;
 
   return (
-    <div className={`hero-background ${className}`.trim()} aria-hidden="true">
-      <div className="hero-media">
-        <img
-          className="hero-poster"
-          src={posterSrc}
-          alt=""
-          width="1920"
-          height="1080"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          onError={() => {
-            if (posterSrc !== "/hero-poster.svg")
-              setPosterSrc("/hero-poster.svg");
-          }}
-        />
-        {showShader && <SilkCanvas />}
-        {showVideo && (
+    <div
+      ref={localContainerRef}
+      aria-hidden="true"
+      className="absolute inset-0 z-0 overflow-hidden bg-[var(--desk)] pointer-events-none select-none"
+      style={{
+        backgroundImage: isLight
+          ? "radial-gradient(ellipse at 72% 42%, rgba(255,90,0,0.18) 0%, rgba(234,215,195,0.55) 48%, #FAF6F0 100%)"
+          : "radial-gradient(ellipse at 72% 42%, rgba(122,42,0,0.65) 0%, rgba(36,13,2,0.85) 48%, #0C0C0D 100%)",
+      }}
+    >
+      <motion.div
+        style={
+          prefersReducedMotion || !bgScale ? undefined : { scale: bgScale }
+        }
+        className="absolute inset-0 will-change-transform origin-center"
+      >
+        {/* a) POSTER: instant LCP element */}
+        {!posterError && (
+          <img
+            src={activePoster}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            decoding="sync"
+            fetchPriority="high"
+            onError={() => setPosterError(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              isLight ? "opacity-20" : "opacity-100"
+            }`}
+          />
+        )}
+
+        {/* c) SILK FABRIC SHADER (Plan B) */}
+        {shouldRunShader && (
+          <canvas
+            ref={canvasRef}
+            className={`absolute inset-0 w-full h-full block transition-opacity duration-500 ${
+              shaderReady ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        )}
+
+        {/* b) VIDEO (Plan A, deferred until after load event) */}
+        {shouldUseVideo && pageLoaded && (
           <video
             ref={videoRef}
-            className={`hero-video${videoState === "ready" ? " is-ready" : ""}`}
             autoPlay
             muted
             loop
             playsInline
             preload="metadata"
-            onPlaying={() => setVideoState("ready")}
-            onError={() => setVideoState("error")}
+            poster={activePoster}
+            onPlaying={() => setVideoReady(true)}
+            onCanPlay={() => setVideoReady(true)}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-400 ease-out ${
+              videoReady
+                ? isLight
+                  ? "opacity-35"
+                  : "opacity-100"
+                : "opacity-0"
+            }`}
           >
-            <source src={videoSrc} type={videoType} />
+            {videoSources.webm && (
+              <source src={videoSources.webm} type="video/webm" />
+            )}
+            {videoSources.mp4 && (
+              <source src={videoSources.mp4} type="video/mp4" />
+            )}
           </video>
         )}
-      </div>
-      <div className="hero-dim" />
-      <div className="hero-tint" />
-      <div className="hero-shade hero-shade-left" />
-      <div className="hero-shade hero-shade-bottom" />
-      <div className="hero-grain" />
+      </motion.div>
+
+      {/* d) OVERLAYS FOR WCAG AA LEGIBILITY */}
+      <div
+        className={`absolute inset-0 ${isLight ? "bg-[#FAF6F0]/15" : "bg-black/15"}`}
+      />
+
+      {/* Left-to-right gradient keeping left-side headline WCAG AA legible */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: isLight
+            ? "linear-gradient(90deg, rgba(250,246,240,0.92) 0%, rgba(250,246,240,0.68) 44%, rgba(250,246,240,0.18) 76%, rgba(250,246,240,0) 100%)"
+            : "linear-gradient(90deg, rgba(12,12,13,0.85) 0%, rgba(12,12,13,0.58) 42%, rgba(12,12,13,0.12) 76%, rgba(12,12,13,0) 100%)",
+        }}
+      />
+
+      {/* Bottom gradient blending seamlessly into section desk */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: isLight
+            ? "linear-gradient(180deg, rgba(250,246,240,0) 56%, rgba(250,246,240,0.78) 84%, #FAF6F0 100%)"
+            : "linear-gradient(180deg, rgba(12,12,13,0) 56%, rgba(12,12,13,0.75) 84%, #0C0C0D 100%)",
+        }}
+      />
+
+      {/* Scroll-driven fade/darken layer into next section */}
+      {bgDarkenOpacity && !prefersReducedMotion && (
+        <motion.div
+          style={{ opacity: bgDarkenOpacity }}
+          className="absolute inset-0 bg-[var(--desk)]"
+        />
+      )}
     </div>
   );
 }
