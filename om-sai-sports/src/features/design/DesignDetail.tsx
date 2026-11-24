@@ -77,7 +77,7 @@ export default function DesignDetail() {
     <>
       <Navbar />
       <main className="design-detail-page">
-        <a className="design-detail-back" href="/#designs"><ArrowLeft size={16} /> Back to the design archive</a>
+        <a className="design-detail-back" href="/#designs" data-cursor="BACK"><ArrowLeft size={16} /> Back to the design archive</a>
         <div className="design-detail">
           <div className="design-detail-media">
             <img src={design.imageUrl} alt={design.alt || design.title} />
@@ -93,8 +93,8 @@ export default function DesignDetail() {
               <div><dt>Made by</dt><dd>OM SAI SPORTS</dd></div>
             </dl>
             <div className="design-detail-actions">
-              <a className="button button-orange" href={waLink} target="_blank" rel="noreferrer">Ask about this design <ExternalLink size={16} /></a>
-              <button className="button button-outline" onClick={copyLink}><Copy size={15} /> {copied ? "Link copied" : "Copy link"}</button>
+              <a className="button button-orange" href={waLink} target="_blank" rel="noreferrer" data-cursor="ENQUIRE">Ask about this design <ExternalLink size={16} /></a>
+              <button className="button button-outline" onClick={copyLink} data-cursor="COPY LINK"><Copy size={15} /> {copied ? "Link copied" : "Copy link"}</button>
             </div>
             <p className="design-detail-note"><Shirt size={17} /> Every jersey is made to order in the Navi Mumbai region. Share your team colours and we’ll take it from there.</p>
           </div>
