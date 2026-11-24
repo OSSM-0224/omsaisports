@@ -71,7 +71,7 @@ const FRAGMENT_SHADER_SRC = `
     float n2 = snoise(p * 2.15 + vec2(-t * 0.30, t * 0.22));
     float foldA = sin(p.x * 2.5 + p.y * 1.45 + t * 0.85 + n1 * 1.55);
     float foldB = sin(p.x * 4.3 - p.y * 2.35 - t * 0.55 + n2 * 1.15) * 0.52;
-    float drape = snoise(vec2(p.x * 0.75 + p.y * 0.6, p.y * 0.85) + t * 0.16) * 0.48;
+    float drape = snoise(vec2(p.x * 0.75 + p.y * 0.6, p.y * 0.85) + vec2(t * 0.16)) * 0.48;
     return foldA * 0.60 + foldB * 0.36 + drape * 0.34;
   }
 
