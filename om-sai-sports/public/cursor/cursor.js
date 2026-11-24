@@ -11,6 +11,8 @@
     const rightSleeve = document.getElementById("cursor-sleeve-right");
     const threadCanvas = document.getElementById("cursor-thread");
     const threadCtx = threadCanvas ? threadCanvas.getContext("2d") : null;
+    const crest = document.getElementById("cursor-crest");
+    const burst = document.getElementById("cursor-burst");
 
     if (
         !root ||
@@ -64,6 +66,7 @@
         threadMaxWidth: 4.2,
         threadStepRatio: 0.03,
         threadMaxPoints: 56,
+        burstMs: 620,
     };
 
     const state = {
@@ -96,6 +99,8 @@
         trail: [],
         threadPresence: 0,
         threadIdle: 0,
+        suppressed: false,
+        burstTimer: 0,
     };
 
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -103,7 +108,8 @@
         target + (current - target) * Math.exp(-lambda * dt);
     const easeInOutCubic = (t) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    const canUse = () => finePointer.matches && !reducedMotion.matches;
+    const canUse = () =>
+        finePointer.matches && !reducedMotion.matches && !state.suppressed;
 
     function sizeThreadCanvas() {
         if (!threadCanvas || !threadCtx) return;
@@ -384,6 +390,41 @@
         }
 
         threadCtx.globalAlpha = 1;
+    }
+
+    function setSuppressed(suppressed) {
+        state.suppressed = suppressed;
+        document.documentElement.classList.toggle("cursor-suppressed", suppressed);
+
+        if (suppressed) {
+            deactivate();
+        }
+    }
+
+    function syncDialogState() {
+        const dialogOpen =
+            Boolean(document.querySelector("dialog[open]")) ||
+            document.documentElement.classList.contains("menu-open");
+
+        if (dialogOpen !== state.suppressed) {
+            setSuppressed(dialogOpen);
+        }
+    }
+
+    function triggerBurst(x, y) {
+        if (!burst) return;
+
+        burst.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        burst.classList.remove("is-active");
+
+        // Restart the CSS animation even on rapid clicks.
+        void burst.offsetWidth;
+        burst.classList.add("is-active");
+
+        window.clearTimeout(state.burstTimer);
+        state.burstTimer = window.setTimeout(() => {
+            burst.classList.remove("is-active");
+        }, CONFIG.burstMs);
     }
 
     function measure() {
@@ -688,6 +729,7 @@
     }
 
     function onPointerMove(event) {
+        if (state.suppressed) return;
         if (event.pointerType && event.pointerType !== "mouse") return;
 
         state.targetX = event.clientX;
@@ -713,11 +755,13 @@
     }
 
     function onPointerDown(event) {
+        if (state.suppressed) return;
         if (event.pointerType && event.pointerType !== "mouse") return;
         if (event.button !== 0 || !state.active) return;
 
         state.pressed = true;
         root.classList.add("is-pressed");
+        triggerBurst(event.clientX, event.clientY);
     }
 
     function onPointerUp() {
@@ -750,6 +794,8 @@
     }
 
     function onModeChange() {
+        syncDialogState();
+
         if (!canUse()) {
             deactivate();
             return;
@@ -814,5 +860,32 @@
     finePointer.addEventListener("change", onModeChange);
     reducedMotion.addEventListener("change", onModeChange);
 
+    // Native <dialog> menus render in the top layer above any z-index, so the
+    // custom cursor steps aside and lets the browser cursor take over.
+    document.addEventListener(
+        "toggle",
+        (event) => {
+            if (event.target instanceof HTMLDialogElement) {
+                syncDialogState();
+            }
+        },
+        true,
+    );
+
+    if (typeof MutationObserver !== "undefined") {
+        const dialogObserver = new MutationObserver(syncDialogState);
+        dialogObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+    }
+
+    if (crest) {
+        crest.querySelector("img")?.addEventListener("error", () => {
+            crest.style.display = "none";
+        });
+    }
+
+    syncDialogState();
     initImages();
 })();
