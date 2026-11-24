@@ -349,13 +349,22 @@ export function HeroBackground({
       if (!parent) return;
       const rect = parent.getBoundingClientRect();
       const rawDpr = window.devicePixelRatio || 1;
-      // Cap DPR at 1.5 desktop, reduced resolution on small mobile screens
+      // Cap DPR at 1.25 desktop, reduced resolution on small mobile screens.
       const dpr =
         window.innerWidth < 768
           ? Math.min(rawDpr, 0.85)
-          : Math.min(rawDpr, 1.5);
-      const width = Math.max(1, Math.floor(rect.width * dpr));
-      const height = Math.max(1, Math.floor(rect.height * dpr));
+          : Math.min(rawDpr, 1.25);
+      let width = Math.max(1, Math.floor(rect.width * dpr));
+      let height = Math.max(1, Math.floor(rect.height * dpr));
+
+      // Keep the silk soft, not expensive: cap total shaded pixels on large/4K screens.
+      const maxPixels = 2_600_000;
+      const pixelScale = Math.min(1, Math.sqrt(maxPixels / (width * height)));
+      if (pixelScale < 1) {
+        width = Math.max(1, Math.floor(width * pixelScale));
+        height = Math.max(1, Math.floor(height * pixelScale));
+      }
+
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
