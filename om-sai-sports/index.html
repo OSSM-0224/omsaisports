@@ -5,14 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#FAF6F0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="description" content="Custom jerseys for schools, colleges and clubs. Crafted by OM SAI SPORTS in Navi Mumbai since 2000." />
+    <meta
+      name="description"
+      content="Custom jerseys for schools, colleges and clubs. Crafted by OM SAI SPORTS in Navi Mumbai since 2000."
+    />
     <meta property="og:title" content="OM SAI SPORTS — Jerseys with a story" />
-    <meta property="og:description" content="Custom jersey design and manufacturing since 2000." />
+    <meta
+      property="og:description"
+      content="Custom jersey design and manufacturing since 2000."
+    />
     <meta property="og:type" content="website" />
     <title>OM SAI SPORTS — Jerseys with a story</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/cursor/cursor.css" />
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+  <canvas class="cursor-thread" id="cursor-thread" aria-hidden="true"></canvas>
+
+  <div class="cursor" id="cursor" aria-hidden="true">
+    <div class="cursor__shirt" id="cursor-shirt">
+      <div class="cursor__float" id="cursor-float">
+        <img
+          class="cursor__image cursor__sleeve cursor__sleeve--left"
+          id="cursor-sleeve-left"
+          src="assets/cursor/jersey-sleeve-left.png"
+          width="400"
+          height="375"
+          alt=""
+          draggable="false"
+        />
+        <img
+          class="cursor__image cursor__sleeve cursor__sleeve--right"
+          id="cursor-sleeve-right"
+          src="assets/cursor/jersey-sleeve-right.png"
+          width="400"
+          height="375"
+          alt=""
+          draggable="false"
+        />
+        <img
+          class="cursor__image cursor__body"
+          id="cursor-image"
+          src="assets/cursor/jersey-body.png"
+          width="400"
+          height="375"
+          alt=""
+          draggable="false"
+        />
+      </div>
+    </div>
+    <span class="cursor__dot" id="cursor-dot"></span>
+    <span class="cursor__label" id="cursor-label"></span>
+  </div>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script src="assets/cursor/cursor.js" defer></script>
+  </body>
 </html>
