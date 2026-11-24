@@ -6,7 +6,7 @@ import { isSupabaseConfigured, supabase } from "../../lib/supabase";
 import { deleteDesign, getDesigns, saveDesign } from "../../lib/data";
 import { defaultSiteSettings, getSiteSettings, saveSiteSettings } from "../../lib/siteSettings";
 import type { SiteSettings } from "../../lib/siteSettings";
-import HeroBackground from "../hero/HeroBackground";
+import { HeroBackground } from "../hero/HeroBackground";
 import type { Category, Design } from "../../types";
 import { Film, Image as ImageIcon, LogOut, Plus, Save, Trash2, Upload } from "lucide-react";
 
@@ -223,7 +223,9 @@ export default function Admin() {
     return (
       <main className="admin-page">
         <div className="admin-box">
-          <a className="wordmark" href="/">OM SAI <span>SPORTS.</span></a>
+          <a className="admin-brand" href="/" aria-label="OM SAI SPORTS — home">
+            <img src="/brand/oss-logo-full.png" alt="OM SAI SPORTS" width="760" height="453" />
+          </a>
           <h1>Admin access</h1>
           <p>Sign in to manage your design archive.</p>
           <form onSubmit={login}>

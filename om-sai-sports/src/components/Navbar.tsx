@@ -218,8 +218,16 @@ export default function Navbar() {
     <>
       <header className="site-head">
         <div className={`glass-pill${scrolled ? " is-scrolled" : ""}`}>
-          <a className="brand-lockup" href={isHome ? "#top" : "/"} aria-label="OM SAI SPORTS — back to home">
-            <span className="brand-spark" aria-hidden="true"><i /></span>
+          <a className="brand-lockup" href={isHome ? "#top" : "/"} aria-label="OM SAI SPORTS — back to home" data-cursor="HOME">
+            <img
+              className="brand-mark"
+              src="/brand/oss-shield-sm.png"
+              width="96"
+              height="120"
+              alt=""
+              aria-hidden="true"
+              draggable="false"
+            />
             <span className="brand-words">
               <span className="brand-name">OM SAI <em>SPORTS.</em></span>
               <span className="brand-sub">Custom teamwear / est. 2000</span>
@@ -232,6 +240,7 @@ export default function Navbar() {
                 key={link.label}
                 className="pill-link"
                 data-text={link.label}
+                data-cursor={link.label.toUpperCase()}
                 href={isHome ? link.hash : `/${link.hash}`}
                 aria-current={activeSection === link.hash.slice(1) ? "location" : undefined}
                 onClick={(event) => {
@@ -249,6 +258,7 @@ export default function Navbar() {
             ref={triggerRef}
             className="pill-menu"
             type="button"
+            data-cursor="OPEN"
             onClick={openMenu}
             aria-haspopup="dialog"
             aria-expanded={open}
@@ -288,16 +298,25 @@ export default function Navbar() {
             <a
               className="menu-brand"
               href="/"
+              data-cursor="HOME"
               onClick={(event) => {
                 event.preventDefault();
                 goHome();
               }}
             >
-              <span className="brand-spark" aria-hidden="true"><i /></span>
+              <img
+                className="brand-mark brand-mark--menu"
+                src="/brand/oss-shield-sm.png"
+                width="96"
+                height="120"
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
               OM SAI <em>SPORTS.</em>
             </a>
             <span className="menu-meta">Navi Mumbai / India — time on the field</span>
-            <button className="menu-close" type="button" onClick={() => closeMenu()}>
+            <button className="menu-close" type="button" data-cursor="CLOSE" onClick={() => closeMenu()}>
               <span>Close</span>
               <span className="menu-close-icon"><X size={16} /></span>
             </button>
@@ -313,6 +332,7 @@ export default function Navbar() {
                     ref={(node) => { menuLinkRefs.current[index] = node; }}
                     className="menu-item"
                     href={isHome ? item.hash : `/${item.hash}`}
+                    data-cursor="GO TO"
                     style={{ "--item-color": item.color, "--item-index": index } as CSSProperties}
                     aria-current={activeSection === item.hash.slice(1) ? "location" : undefined}
                     onMouseEnter={() => setActiveIndex(index)}
@@ -354,6 +374,7 @@ export default function Navbar() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
+                data-cursor="CHAT"
               >
                 Start a conversation <ArrowUpRight size={14} />
               </a>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, Shirt } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { HeroBackground } from "./HeroBackground.tsx";
 import { defaultSiteSettings, getSiteSettings } from "../../lib/siteSettings";
 import type { SiteSettings } from "../../lib/siteSettings";
@@ -92,7 +92,7 @@ export default function Hero({ designs }: { designs: Design[] }) {
       className={`hero${scrolled ? " is-scrolled" : ""}`}
       ref={heroRef}
     >
-      <HeroBackground settings={settings} />
+      <HeroBackground settings={settings} appearance="dark" />
       <div className="hero-copy">
         <div className="eyebrow-chip">
           <i /> New designs added weekly
@@ -149,7 +149,15 @@ export default function Hero({ designs }: { designs: Design[] }) {
           <div className="badge-ring">
             EST. 2000 • OM SAI SPORTS • JERSEY MAKERS •
           </div>
-          <Shirt size={25} />
+          <img
+            className="est-crest"
+            src="/brand/oss-shield.png"
+            width="280"
+            height="349"
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+          />
         </div>
         <div className="design-wall">
           <div className="wall-column up">
