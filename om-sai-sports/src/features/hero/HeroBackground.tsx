@@ -457,7 +457,6 @@ export function HeroBackground({
         gl.deleteProgram(program);
         gl.deleteShader(vert);
         gl.deleteShader(frag);
-        gl.getExtension("WEBGL_lose_context")?.loseContext();
       } catch {
         // Ignore teardown issues on already-lost context
       }
