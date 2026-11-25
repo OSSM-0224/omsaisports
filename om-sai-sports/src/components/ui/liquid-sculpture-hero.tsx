@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * Sculpture Hero — liquid particle hero
@@ -9,57 +9,60 @@
  * the crisp image. Without WebGL2 the static image is shown.
  */
 
-import * as React from "react"
+import * as React from "react";
 
 /* ────────────────────────────────────────────────────────────────────
    Engine (WebGL2 GPGPU particles)
    ──────────────────────────────────────────────────────────────────── */
 
-type Rect = { x: number; y: number; w: number; h: number }
+type Rect = { x: number; y: number; w: number; h: number };
 
 interface EngineOptions {
-  interactive: boolean
-  strength: number
-  radius: number
-  density: number
-  dotSize: number
-  spread: number
-  turbulence: number
-  returnSpeed: number
-  streaks: boolean
-  restStyle: "image" | "particles"
-  ambient: boolean
-  ambientIntensity: number
-  speed: number
-  intro: boolean
-  reducedMotion: boolean
-  bg: [number, number, number]
+  interactive: boolean;
+  strength: number;
+  radius: number;
+  density: number;
+  dotSize: number;
+  spread: number;
+  turbulence: number;
+  returnSpeed: number;
+  streaks: boolean;
+  restStyle: "image" | "particles";
+  ambient: boolean;
+  ambientIntensity: number;
+  speed: number;
+  intro: boolean;
+  reducedMotion: boolean;
+  bg: [number, number, number];
   /** null = detected from the image corners */
-  imgBg: [number, number, number] | null
+  imgBg: [number, number, number] | null;
   /** 0 – 2: how much the whole sculpture flows while the cursor is over it */
-  liquid: number
+  liquid: number;
 }
 
 function clamp(v: number, a: number, b: number) {
-  return Math.min(b, Math.max(a, v))
+  return Math.min(b, Math.max(a, v));
 }
 
-function hexToRgb(hex: string, fallback: [number, number, number]): [number, number, number] {
-  if (typeof hex !== "string") return fallback
-  const s = hex.trim()
-  let m = s.match(/^#?([0-9a-f]{3})$/i)
+function hexToRgb(
+  hex: string,
+  fallback: [number, number, number],
+): [number, number, number] {
+  if (typeof hex !== "string") return fallback;
+  const s = hex.trim();
+  let m = s.match(/^#?([0-9a-f]{3})$/i);
   if (m) {
-    const [r, g, b] = m[1].split("").map((c) => parseInt(c + c, 16) / 255)
-    return [r, g, b]
+    const [r, g, b] = m[1].split("").map((c) => parseInt(c + c, 16) / 255);
+    return [r, g, b];
   }
-  m = s.match(/^#?([0-9a-f]{6})([0-9a-f]{2})?$/i)
+  m = s.match(/^#?([0-9a-f]{6})([0-9a-f]{2})?$/i);
   if (m) {
-    const n = parseInt(m[1], 16)
-    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
+    const n = parseInt(m[1], 16);
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
   }
-  m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i)
-  if (m) return [+m[1] / 255, +m[2] / 255, +m[3] / 255]
-  return fallback
+  m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+  if (m) return [+m[1] / 255, +m[2] / 255, +m[3] / 255];
+  return fallback;
 }
 
 /* ── shaders ─────────────────────────────────────────────────────────── */
@@ -75,7 +78,7 @@ vec2 ambientField(vec2 uv, float t){
   vec2 b = vec2(vnoise(q2+1.7)-0.5, vnoise(q2+9.3)-0.5);
   return a + b*0.45;
 }
-`
+`;
 
 /* energy of the material at a point: shared by image and particles so the
    cross-fade is exactly complementary */
@@ -85,13 +88,13 @@ float energyAt(vec2 rectPx, vec2 mouse, float radius, float presence, float wake
   float f = exp(-dot(d,d)/(radius*radius))*presence;
   return smoothstep(0.06, 0.5, f*1.15 + wakeEnergy*1.7);
 }
-`
+`;
 
 const QUAD_VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vUv;
 void main(){ vUv = aPos*0.5+0.5; gl_Position = vec4(aPos,0.0,1.0); }
-`
+`;
 
 /* Flow map (cursor wake). RGBA8: velocity encoded around 128, energy in B. */
 const FLOW_FS = `#version 300 es
@@ -127,7 +130,7 @@ void main(){
   v = clamp(v, -1.0, 1.0);
   o = vec4((v*127.0+128.0)/255.0, p, 1.0);
 }
-`
+`;
 
 /* GPGPU step: state = (offset.xy, velocity.xy) in rect CSS px. */
 const SIM_FS = `#version 300 es
@@ -195,7 +198,7 @@ void main(){
   if(dot(off,off) < 0.0004 && dot(vel,vel) < 0.0004){ off = vec2(0.0); vel = vec2(0.0); }
   o = vec4(off, vel);
 }
-`
+`;
 
 /* Particles: one instanced quad per particle, a capsule stretched along velocity. */
 const PART_VS = `#version 300 es
@@ -262,7 +265,7 @@ void main(){
   vCol = col;
   vA = a;
 }
-`
+`;
 
 const PART_FS = `#version 300 es
 precision highp float;
@@ -284,7 +287,7 @@ void main(){
   if(a < 0.004) discard;
   o = vec4(vCol*a, a);
 }
-`
+`;
 
 /* Image pass: the crisp sculpture, gently lensed, fading out where the
    material has turned liquid. */
@@ -335,119 +338,127 @@ void main(){
   float A = k*show;
   o = vec4(mat*A, A);
 }
-`
+`;
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
 
-type Prog = { p: WebGLProgram; u: Record<string, WebGLUniformLocation | null> }
+type Prog = { p: WebGLProgram; u: Record<string, WebGLUniformLocation | null> };
 
 function compile(gl: WebGL2RenderingContext, vs: string, fs: string): Prog {
   const make = (type: number, src: string) => {
-    const sh = gl.createShader(type)!
-    gl.shaderSource(sh, src)
-    gl.compileShader(sh)
+    const sh = gl.createShader(type)!;
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
     if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      const log = gl.getShaderInfoLog(sh)
-      gl.deleteShader(sh)
-      throw new Error("Shader: " + log)
+      const log = gl.getShaderInfoLog(sh);
+      gl.deleteShader(sh);
+      throw new Error("Shader: " + log);
     }
-    return sh
-  }
-  const p = gl.createProgram()!
-  const v = make(gl.VERTEX_SHADER, vs)
-  const f = make(gl.FRAGMENT_SHADER, fs)
-  gl.attachShader(p, v)
-  gl.attachShader(p, f)
-  gl.bindAttribLocation(p, 0, "aPos")
-  gl.linkProgram(p)
-  gl.deleteShader(v)
-  gl.deleteShader(f)
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error("Link: " + gl.getProgramInfoLog(p))
-  const u: Record<string, WebGLUniformLocation | null> = {}
-  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS)
+    return sh;
+  };
+  const p = gl.createProgram()!;
+  const v = make(gl.VERTEX_SHADER, vs);
+  const f = make(gl.FRAGMENT_SHADER, fs);
+  gl.attachShader(p, v);
+  gl.attachShader(p, f);
+  gl.bindAttribLocation(p, 0, "aPos");
+  gl.linkProgram(p);
+  gl.deleteShader(v);
+  gl.deleteShader(f);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+    throw new Error("Link: " + gl.getProgramInfoLog(p));
+  const u: Record<string, WebGLUniformLocation | null> = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
   for (let i = 0; i < n; i++) {
-    const info = gl.getActiveUniform(p, i)
-    if (info) u[info.name] = gl.getUniformLocation(p, info.name)
+    const info = gl.getActiveUniform(p, i);
+    if (info) u[info.name] = gl.getUniformLocation(p, info.name);
   }
-  return { p, u }
+  return { p, u };
 }
 
 /* ── engine ──────────────────────────────────────────────────────────── */
 
-const TEX_W = 1024
-const SETTLE_FRAMES = 270
+const TEX_W = 1024;
+const SETTLE_FRAMES = 270;
 
 class LiquidEngine {
-  lastImage: HTMLImageElement | null = null
+  lastImage: HTMLImageElement | null = null;
   /** Called once, after the first frame has actually been drawn. */
-  onFirstFrame: (() => void) | null = null
+  onFirstFrame: (() => void) | null = null;
 
-  private canvas: HTMLCanvasElement
-  private gl: WebGL2RenderingContext
-  private opts: EngineOptions
-  private onFail: () => void
-  private lowPower = false
-  private stateFormat: { internal: number; type: number } = { internal: 0, type: 0 }
+  private canvas: HTMLCanvasElement;
+  private gl: WebGL2RenderingContext;
+  private opts: EngineOptions;
+  private onFail: () => void;
+  private lowPower = false;
+  private stateFormat: { internal: number; type: number } = {
+    internal: 0,
+    type: 0,
+  };
 
-  private pFlow!: Prog
-  private pSim!: Prog
-  private pPart!: Prog
-  private pImg!: Prog
-  private vao!: WebGLVertexArrayObject
-  private quad!: WebGLBuffer
+  private pFlow!: Prog;
+  private pSim!: Prog;
+  private pPart!: Prog;
+  private pImg!: Prog;
+  private vao!: WebGLVertexArrayObject;
+  private quad!: WebGLBuffer;
 
-  private imgTex: WebGLTexture | null = null
-  private flowTex: WebGLTexture[] = []
-  private flowFb: WebGLFramebuffer[] = []
-  private flowW = 256
-  private flowH = 104
-  private flowIdx = 0
-  private flowDirty = false
+  private imgTex: WebGLTexture | null = null;
+  private flowTex: WebGLTexture[] = [];
+  private flowFb: WebGLFramebuffer[] = [];
+  private flowW = 256;
+  private flowH = 104;
+  private flowIdx = 0;
+  private flowDirty = false;
 
-  private homeTex: WebGLTexture | null = null
-  private colTex: WebGLTexture | null = null
-  private stateTex: WebGLTexture[] = []
-  private stateFb: WebGLFramebuffer[] = []
-  private stateIdx = 0
-  private texH = 1
-  private n = 0
-  private gridW = 1
-  private stateDirty = false
-  private alphaMode = false
-  private imgBg: [number, number, number] = [0.918, 0.914, 0.906]
-  private flowing = 0
+  private homeTex: WebGLTexture | null = null;
+  private colTex: WebGLTexture | null = null;
+  private stateTex: WebGLTexture[] = [];
+  private stateFb: WebGLFramebuffer[] = [];
+  private stateIdx = 0;
+  private texH = 1;
+  private n = 0;
+  private gridW = 1;
+  private stateDirty = false;
+  private alphaMode = false;
+  private imgBg: [number, number, number] = [0.918, 0.914, 0.906];
+  private flowing = 0;
 
-  private aspect = 2.5
-  private rect: Rect = { x: 0, y: 0, w: 1, h: 1 }
-  private cssW = 1
-  private cssH = 1
+  private aspect = 2.5;
+  private rect: Rect = { x: 0, y: 0, w: 1, h: 1 };
+  private cssW = 1;
+  private cssH = 1;
 
-  private target = { x: -9999, y: -9999 }
-  private mouse = { x: -9999, y: -9999 }
-  private prevMouse = { x: -9999, y: -9999 }
-  private mvel = { x: 0, y: 0 }
-  private presence = 0
-  private presenceTarget = 0
-  private burst = 0
-  private lastInput = -1e9
-  private settle = 1e9
-  private touchRelease = 0
+  private target = { x: -9999, y: -9999 };
+  private mouse = { x: -9999, y: -9999 };
+  private prevMouse = { x: -9999, y: -9999 };
+  private mvel = { x: 0, y: 0 };
+  private presence = 0;
+  private presenceTarget = 0;
+  private burst = 0;
+  private lastInput = -1e9;
+  private settle = 1e9;
+  private touchRelease = 0;
 
-  private time = 0
-  private introT = 1
-  private raf = 0
-  private running = false
-  private last = 0
-  private skip = 0
-  private visible = true
-  private ready = false
-  private destroyed = false
-  private lost = false
+  private time = 0;
+  private introT = 1;
+  private raf = 0;
+  private running = false;
+  private last = 0;
+  private skip = 0;
+  private visible = true;
+  private ready = false;
+  private destroyed = false;
+  private lost = false;
 
-  constructor(canvas: HTMLCanvasElement, opts: EngineOptions, onFail: () => void) {
-    this.canvas = canvas
-    this.opts = opts
-    this.onFail = onFail
+  constructor(
+    canvas: HTMLCanvasElement,
+    opts: EngineOptions,
+    onFail: () => void,
+  ) {
+    this.canvas = canvas;
+    this.opts = opts;
+    this.onFail = onFail;
     // alpha: an unpresented canvas stays transparent, so the static image under it shows
     const gl = canvas.getContext("webgl2", {
       alpha: true,
@@ -457,55 +468,73 @@ class LiquidEngine {
       premultipliedAlpha: true,
       preserveDrawingBuffer: false,
       powerPreference: "high-performance",
-    }) as WebGL2RenderingContext | null
-    if (!gl) throw new Error("WebGL2 unavailable")
-    this.gl = gl
-    const nav = navigator as Navigator & { deviceMemory?: number }
+    }) as WebGL2RenderingContext | null;
+    if (!gl) throw new Error("WebGL2 unavailable");
+    this.gl = gl;
+    const nav = navigator as Navigator & { deviceMemory?: number };
     this.lowPower =
       (nav.hardwareConcurrency || 8) <= 4 ||
       (nav.deviceMemory || 8) <= 4 ||
-      window.matchMedia("(pointer: coarse)").matches
-    this.initGL()
-    canvas.addEventListener("webglcontextlost", this.onLost, false)
+      window.matchMedia("(pointer: coarse)").matches;
+    this.initGL();
+    canvas.addEventListener("webglcontextlost", this.onLost, false);
   }
 
   private onLost = (e: Event) => {
-    e.preventDefault()
-    this.lost = true
-    this.stop()
-    this.onFail()
-  }
+    e.preventDefault();
+    this.lost = true;
+    this.stop();
+    this.onFail();
+  };
 
   private initGL() {
-    const gl = this.gl
+    const gl = this.gl;
     // float render targets: RGBA16F is enough (offsets in px, sub-pixel precision)
-    const full = gl.getExtension("EXT_color_buffer_float")
-    const half = full ? null : gl.getExtension("EXT_color_buffer_half_float")
-    if (!full && !half) throw new Error("No float render targets")
-    this.stateFormat = { internal: gl.RGBA16F, type: gl.HALF_FLOAT }
+    const full = gl.getExtension("EXT_color_buffer_float");
+    const half = full ? null : gl.getExtension("EXT_color_buffer_half_float");
+    if (!full && !half) throw new Error("No float render targets");
+    this.stateFormat = { internal: gl.RGBA16F, type: gl.HALF_FLOAT };
 
-    this.pFlow = compile(gl, QUAD_VS, FLOW_FS)
-    this.pSim = compile(gl, QUAD_VS, SIM_FS)
-    this.pPart = compile(gl, PART_VS, PART_FS)
-    this.pImg = compile(gl, QUAD_VS, IMAGE_FS)
+    this.pFlow = compile(gl, QUAD_VS, FLOW_FS);
+    this.pSim = compile(gl, QUAD_VS, SIM_FS);
+    this.pPart = compile(gl, PART_VS, PART_FS);
+    this.pImg = compile(gl, QUAD_VS, IMAGE_FS);
 
-    this.vao = gl.createVertexArray()!
-    gl.bindVertexArray(this.vao)
-    this.quad = gl.createBuffer()!
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW)
-    gl.enableVertexAttribArray(0)
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
+    this.vao = gl.createVertexArray()!;
+    gl.bindVertexArray(this.vao);
+    this.quad = gl.createBuffer()!;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+      gl.STATIC_DRAW,
+    );
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
     for (let i = 0; i < 2; i++) {
-      const t = this.makeTex(gl.RGBA8, this.flowW, this.flowH, gl.RGBA, gl.UNSIGNED_BYTE, null, gl.LINEAR)
-      const fb = gl.createFramebuffer()!
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0)
-      this.flowTex.push(t)
-      this.flowFb.push(fb)
+      const t = this.makeTex(
+        gl.RGBA8,
+        this.flowW,
+        this.flowH,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null,
+        gl.LINEAR,
+      );
+      const fb = gl.createFramebuffer()!;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        t,
+        0,
+      );
+      this.flowTex.push(t);
+      this.flowFb.push(fb);
     }
-    this.clearFlow()
+    this.clearFlow();
   }
 
   private makeTex(
@@ -515,499 +544,624 @@ class LiquidEngine {
     format: number,
     type: number,
     data: ArrayBufferView | null,
-    filter: number
+    filter: number,
   ) {
-    const gl = this.gl
-    const t = gl.createTexture()!
-    gl.bindTexture(gl.TEXTURE_2D, t)
-    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
-    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, data)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    return t
+    const gl = this.gl;
+    const t = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
   }
 
   private clearFlow() {
-    const gl = this.gl
+    const gl = this.gl;
     for (const fb of this.flowFb) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-      gl.viewport(0, 0, this.flowW, this.flowH)
-      gl.clearColor(128 / 255, 128 / 255, 0, 1)
-      gl.clear(gl.COLOR_BUFFER_BIT)
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.viewport(0, 0, this.flowW, this.flowH);
+      gl.clearColor(128 / 255, 128 / 255, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    this.flowDirty = false
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.flowDirty = false;
   }
 
   private clearState() {
-    const gl = this.gl
+    const gl = this.gl;
     for (const fb of this.stateFb) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-      gl.viewport(0, 0, TEX_W, this.texH)
-      gl.clearColor(0, 0, 0, 0)
-      gl.clear(gl.COLOR_BUFFER_BIT)
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.viewport(0, 0, TEX_W, this.texH);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    this.stateDirty = false
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.stateDirty = false;
   }
 
   setImage(img: HTMLImageElement) {
-    if (this.destroyed || this.lost) return
-    const gl = this.gl
-    this.lastImage = img
-    this.aspect = img.naturalWidth / img.naturalHeight || 2.5
-    this.flowH = Math.max(32, Math.round(this.flowW / this.aspect))
+    if (this.destroyed || this.lost) return;
+    const gl = this.gl;
+    this.lastImage = img;
+    this.aspect = img.naturalWidth / img.naturalHeight || 2.5;
+    this.flowH = Math.max(32, Math.round(this.flowW / this.aspect));
     for (const t of this.flowTex) {
-      gl.bindTexture(gl.TEXTURE_2D, t)
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.flowW, this.flowH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA8,
+        this.flowW,
+        this.flowH,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null,
+      );
     }
-    this.clearFlow()
-    if (this.imgTex) gl.deleteTexture(this.imgTex)
-    this.imgTex = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, this.imgTex)
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
-    gl.generateMipmap(gl.TEXTURE_2D)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    this.buildParticles(img)
-    this.ready = true
-    if (this.opts.intro && !this.opts.reducedMotion) this.startIntro()
-    this.wake()
+    this.clearFlow();
+    if (this.imgTex) gl.deleteTexture(this.imgTex);
+    this.imgTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.imgTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR,
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.buildParticles(img);
+    this.ready = true;
+    if (this.opts.intro && !this.opts.reducedMotion) this.startIntro();
+    this.wake();
   }
 
   /** One particle per material pixel of a grid laid over the image. */
   private buildParticles(img: HTMLImageElement) {
-    const gl = this.gl
-    const baseGrid = this.lowPower ? 640 : 1000
-    const gw = Math.round(baseGrid * Math.sqrt(clamp(this.opts.density, 0.15, 2)))
-    const gh = Math.max(1, Math.round(gw / this.aspect))
-    this.gridW = gw
-    let data: Uint8ClampedArray
+    const gl = this.gl;
+    const baseGrid = this.lowPower ? 640 : 1000;
+    const gw = Math.round(
+      baseGrid * Math.sqrt(clamp(this.opts.density, 0.15, 2)),
+    );
+    const gh = Math.max(1, Math.round(gw / this.aspect));
+    this.gridW = gw;
+    let data: Uint8ClampedArray;
     try {
-      const c = document.createElement("canvas")
-      c.width = gw
-      c.height = gh
-      const ctx = c.getContext("2d", { willReadFrequently: true })!
-      ctx.imageSmoothingQuality = "high"
-      ctx.drawImage(img, 0, 0, gw, gh)
-      data = ctx.getImageData(0, 0, gw, gh).data
+      const c = document.createElement("canvas");
+      c.width = gw;
+      c.height = gh;
+      const ctx = c.getContext("2d", { willReadFrequently: true })!;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, gw, gh);
+      data = ctx.getImageData(0, 0, gw, gh).data;
     } catch {
-      throw new Error("Image is not CORS-readable")
+      throw new Error("Image is not CORS-readable");
     }
     // a cut-out (transparent) image is sampled by alpha, a flat one by colour distance
-    let transparent = 0
-    for (let i = 3; i < data.length; i += 4 * 7) if (data[i] < 250) transparent++
-    this.alphaMode = transparent > data.length / (4 * 7) / 20
-    if (this.opts.imgBg) this.imgBg = this.opts.imgBg
+    let transparent = 0;
+    for (let i = 3; i < data.length; i += 4 * 7)
+      if (data[i] < 250) transparent++;
+    this.alphaMode = transparent > data.length / (4 * 7) / 20;
+    if (this.opts.imgBg) this.imgBg = this.opts.imgBg;
     else if (!this.alphaMode) {
       // flat background: average the four corners
-      let r = 0, g = 0, b = 0, n = 0
-      const pw = Math.max(2, Math.round(gw * 0.012))
-      for (const [cx, cy] of [[0, 0], [gw - pw, 0], [0, gh - pw], [gw - pw, gh - pw]]) {
+      let r = 0,
+        g = 0,
+        b = 0,
+        n = 0;
+      const pw = Math.max(2, Math.round(gw * 0.012));
+      for (const [cx, cy] of [
+        [0, 0],
+        [gw - pw, 0],
+        [0, gh - pw],
+        [gw - pw, gh - pw],
+      ]) {
         for (let y = cy; y < cy + pw; y++)
           for (let x = cx; x < cx + pw; x++) {
-            const i = (y * gw + x) * 4
-            r += data[i]; g += data[i + 1]; b += data[i + 2]; n++
+            const i = (y * gw + x) * 4;
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            n++;
           }
       }
-      this.imgBg = [r / n / 255, g / n / 255, b / n / 255]
+      this.imgBg = [r / n / 255, g / n / 255, b / n / 255];
     }
-    const home: number[] = []
-    const col: number[] = []
+    const home: number[] = [];
+    const col: number[] = [];
     for (let y = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++) {
-        const i = (y * gw + x) * 4
-        const r = data[i] / 255
-        const g = data[i + 1] / 255
-        const b = data[i + 2] / 255
+        const i = (y * gw + x) * 4;
+        const r = data[i] / 255;
+        const g = data[i + 1] / 255;
+        const b = data[i + 2] / 255;
         if (this.alphaMode) {
-          const a = data[i + 3] / 255
-          if (a < 0.12) continue
-          if (a < 0.5 && Math.random() > a * 2) continue
+          const a = data[i + 3] / 255;
+          if (a < 0.12) continue;
+          if (a < 0.5 && Math.random() > a * 2) continue;
         } else {
-          const dev = Math.hypot(r - this.imgBg[0], g - this.imgBg[1], b - this.imgBg[2])
-          if (dev < 0.03) continue
-          if (dev < 0.07 && Math.random() > (dev - 0.03) / 0.04) continue
+          const dev = Math.hypot(
+            r - this.imgBg[0],
+            g - this.imgBg[1],
+            b - this.imgBg[2],
+          );
+          if (dev < 0.03) continue;
+          if (dev < 0.07 && Math.random() > (dev - 0.03) / 0.04) continue;
         }
-        const jx = (Math.random() - 0.5) * 0.6
-        const jy = (Math.random() - 0.5) * 0.6
-        home.push((x + 0.5 + jx) / gw, (y + 0.5 + jy) / gh, Math.random(), 0.85 + Math.random() * 0.3)
-        col.push(data[i], data[i + 1], data[i + 2], 255)
+        const jx = (Math.random() - 0.5) * 0.6;
+        const jy = (Math.random() - 0.5) * 0.6;
+        home.push(
+          (x + 0.5 + jx) / gw,
+          (y + 0.5 + jy) / gh,
+          Math.random(),
+          0.85 + Math.random() * 0.3,
+        );
+        col.push(data[i], data[i + 1], data[i + 2], 255);
       }
     }
-    const n = home.length / 4
-    this.n = n
-    this.texH = Math.max(1, Math.ceil(n / TEX_W))
-    const total = TEX_W * this.texH
-    const homeArr = new Float32Array(total * 4)
-    homeArr.set(home)
-    const colArr = new Uint8Array(total * 4)
-    colArr.set(col)
+    const n = home.length / 4;
+    this.n = n;
+    this.texH = Math.max(1, Math.ceil(n / TEX_W));
+    const total = TEX_W * this.texH;
+    const homeArr = new Float32Array(total * 4);
+    homeArr.set(home);
+    const colArr = new Uint8Array(total * 4);
+    colArr.set(col);
 
-    for (const t of [this.homeTex, this.colTex, ...this.stateTex]) if (t) gl.deleteTexture(t)
-    for (const f of this.stateFb) gl.deleteFramebuffer(f)
-    this.stateTex = []
-    this.stateFb = []
-    this.homeTex = this.makeTex(gl.RGBA32F, TEX_W, this.texH, gl.RGBA, gl.FLOAT, homeArr, gl.NEAREST)
-    this.colTex = this.makeTex(gl.RGBA8, TEX_W, this.texH, gl.RGBA, gl.UNSIGNED_BYTE, colArr, gl.NEAREST)
+    for (const t of [this.homeTex, this.colTex, ...this.stateTex])
+      if (t) gl.deleteTexture(t);
+    for (const f of this.stateFb) gl.deleteFramebuffer(f);
+    this.stateTex = [];
+    this.stateFb = [];
+    this.homeTex = this.makeTex(
+      gl.RGBA32F,
+      TEX_W,
+      this.texH,
+      gl.RGBA,
+      gl.FLOAT,
+      homeArr,
+      gl.NEAREST,
+    );
+    this.colTex = this.makeTex(
+      gl.RGBA8,
+      TEX_W,
+      this.texH,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      colArr,
+      gl.NEAREST,
+    );
     for (let i = 0; i < 2; i++) {
-      const t = this.makeTex(this.stateFormat.internal, TEX_W, this.texH, gl.RGBA, this.stateFormat.type, null, gl.NEAREST)
-      const fb = gl.createFramebuffer()!
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0)
-      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error("Float FBO incomplete")
-      this.stateTex.push(t)
-      this.stateFb.push(fb)
+      const t = this.makeTex(
+        this.stateFormat.internal,
+        TEX_W,
+        this.texH,
+        gl.RGBA,
+        this.stateFormat.type,
+        null,
+        gl.NEAREST,
+      );
+      const fb = gl.createFramebuffer()!;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        t,
+        0,
+      );
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+        throw new Error("Float FBO incomplete");
+      this.stateTex.push(t);
+      this.stateFb.push(fb);
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    this.homeData = homeArr
-    this.clearState()
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.homeData = homeArr;
+    this.clearState();
   }
 
-  private homeData: Float32Array | null = null
+  private homeData: Float32Array | null = null;
 
   private startIntro() {
-    const gl = this.gl
-    const home = this.homeData
-    if (!home) return
-    const w = this.rect.w > 10 ? this.rect.w : 1300
-    const total = TEX_W * this.texH
-    const st = new Float32Array(total * 4)
+    const gl = this.gl;
+    const home = this.homeData;
+    if (!home) return;
+    const w = this.rect.w > 10 ? this.rect.w : 1300;
+    const total = TEX_W * this.texH;
+    const st = new Float32Array(total * 4);
     for (let i = 0; i < this.n; i++) {
-      const hx = home[i * 4] - 0.5
-      const hy = home[i * 4 + 1] - 0.5
-      const sd = home[i * 4 + 2]
-      const ang = (Math.random() - 0.5) * 0.9 + (hx > 0 ? 0 : Math.PI)
-      const dist = w * (0.04 + Math.random() * 0.14) * (0.5 + Math.abs(hx) * 1.4)
-      st[i * 4] = Math.cos(ang) * dist + hx * w * 0.25 * sd
-      st[i * 4 + 1] = Math.sin(ang) * dist * 0.55 + hy * 120 * (Math.random() - 0.5)
+      const hx = home[i * 4] - 0.5;
+      const hy = home[i * 4 + 1] - 0.5;
+      const sd = home[i * 4 + 2];
+      const ang = (Math.random() - 0.5) * 0.9 + (hx > 0 ? 0 : Math.PI);
+      const dist =
+        w * (0.04 + Math.random() * 0.14) * (0.5 + Math.abs(hx) * 1.4);
+      st[i * 4] = Math.cos(ang) * dist + hx * w * 0.25 * sd;
+      st[i * 4 + 1] =
+        Math.sin(ang) * dist * 0.55 + hy * 120 * (Math.random() - 0.5);
     }
-    gl.bindTexture(gl.TEXTURE_2D, this.stateTex[this.stateIdx])
-    gl.texImage2D(gl.TEXTURE_2D, 0, this.stateFormat.internal, TEX_W, this.texH, 0, gl.RGBA, gl.FLOAT, st)
-    this.introT = 0
-    this.stateDirty = true
+    gl.bindTexture(gl.TEXTURE_2D, this.stateTex[this.stateIdx]);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      this.stateFormat.internal,
+      TEX_W,
+      this.texH,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      st,
+    );
+    this.introT = 0;
+    this.stateDirty = true;
   }
 
   setOptions(o: Partial<EngineOptions>) {
     const rebuild =
       (o.density !== undefined && o.density !== this.opts.density) ||
-      (o.imgBg !== undefined && String(o.imgBg) !== String(this.opts.imgBg))
-    this.opts = { ...this.opts, ...o }
+      (o.imgBg !== undefined && String(o.imgBg) !== String(this.opts.imgBg));
+    this.opts = { ...this.opts, ...o };
     if (rebuild && this.ready && this.lastImage) {
       try {
-        this.buildParticles(this.lastImage)
+        this.buildParticles(this.lastImage);
       } catch {
-        this.onFail()
+        this.onFail();
       }
     }
-    this.wake()
+    this.wake();
   }
 
   resize(cssW: number, cssH: number, rect: Rect) {
-    this.cssW = Math.max(1, cssW)
-    this.cssH = Math.max(1, cssH)
-    this.rect = rect
-    let dpr = Math.min(window.devicePixelRatio || 1, this.lowPower ? 1.5 : 2)
-    const px = this.cssW * this.cssH * dpr * dpr
-    if (px > 4.5e6) dpr = Math.max(1, Math.sqrt(4.5e6 / (this.cssW * this.cssH)))
-    const w = Math.round(this.cssW * dpr)
-    const h = Math.round(this.cssH * dpr)
+    this.cssW = Math.max(1, cssW);
+    this.cssH = Math.max(1, cssH);
+    this.rect = rect;
+    let dpr = Math.min(window.devicePixelRatio || 1, this.lowPower ? 1.5 : 2);
+    const px = this.cssW * this.cssH * dpr * dpr;
+    if (px > 4.5e6)
+      dpr = Math.max(1, Math.sqrt(4.5e6 / (this.cssW * this.cssH)));
+    const w = Math.round(this.cssW * dpr);
+    const h = Math.round(this.cssH * dpr);
     if (this.canvas.width !== w || this.canvas.height !== h) {
-      this.canvas.width = w
-      this.canvas.height = h
+      this.canvas.width = w;
+      this.canvas.height = h;
     }
-    this.draw()
+    this.draw();
   }
 
   setVisible(v: boolean) {
-    this.visible = v
-    if (v) this.wake()
-    else this.stop()
+    this.visible = v;
+    if (v) this.wake();
+    else this.stop();
   }
 
-  pointer(type: "move" | "down" | "up" | "leave", x: number, y: number, touch: boolean) {
-    if (!this.opts.interactive || this.lost) return
-    const now = performance.now()
+  pointer(
+    type: "move" | "down" | "up" | "leave",
+    x: number,
+    y: number,
+    touch: boolean,
+  ) {
+    if (!this.opts.interactive || this.lost) return;
+    const now = performance.now();
     if (type === "leave" || type === "up") {
-      if (touch) this.touchRelease = now + 260
-      else this.presenceTarget = 0
-      this.wake()
-      return
+      if (touch) this.touchRelease = now + 260;
+      else this.presenceTarget = 0;
+      this.wake();
+      return;
     }
     if (this.mouse.x < -9000 || type === "down") {
-      this.mouse.x = this.prevMouse.x = x
-      this.mouse.y = this.prevMouse.y = y
+      this.mouse.x = this.prevMouse.x = x;
+      this.mouse.y = this.prevMouse.y = y;
     }
-    this.target.x = x
-    this.target.y = y
-    this.presenceTarget = 1
-    this.lastInput = now
-    this.settle = 0
+    this.target.x = x;
+    this.target.y = y;
+    this.presenceTarget = 1;
+    this.lastInput = now;
+    this.settle = 0;
     if (type === "down") {
-      this.burst = 1
-      this.touchRelease = 0
+      this.burst = 1;
+      this.touchRelease = 0;
     }
-    this.wake()
+    this.wake();
   }
 
   private wake() {
-    if (!this.ready || this.running || !this.visible || this.destroyed || this.lost) {
-      if (this.ready && !this.running) this.draw()
-      return
+    if (
+      !this.ready ||
+      this.running ||
+      !this.visible ||
+      this.destroyed ||
+      this.lost
+    ) {
+      if (this.ready && !this.running) this.draw();
+      return;
     }
-    this.running = true
-    this.last = performance.now()
-    this.raf = requestAnimationFrame(this.frame)
+    this.running = true;
+    this.last = performance.now();
+    this.raf = requestAnimationFrame(this.frame);
   }
 
   private stop() {
-    this.running = false
-    cancelAnimationFrame(this.raf)
+    this.running = false;
+    cancelAnimationFrame(this.raf);
   }
 
   private radiusPx() {
-    return this.opts.radius * clamp(this.rect.w / 1400, 0.6, 1.25)
+    return this.opts.radius * clamp(this.rect.w / 1400, 0.6, 1.25);
   }
 
   private strength() {
-    return this.opts.strength * (this.opts.reducedMotion ? 0.5 : 1)
+    return this.opts.strength * (this.opts.reducedMotion ? 0.5 : 1);
   }
 
   private frame = (now: number) => {
-    if (!this.running) return
-    const rawMs = now - this.last
-    const dt = clamp(rawMs / 16.6667, 0.25, 3)
-    this.last = now
-    const o = this.opts
-    const ambientOn = o.ambient && !o.reducedMotion
+    if (!this.running) return;
+    const rawMs = now - this.last;
+    const dt = clamp(rawMs / 16.6667, 0.25, 3);
+    this.last = now;
+    const o = this.opts;
+    const ambientOn = o.ambient && !o.reducedMotion;
 
     if (this.touchRelease && now > this.touchRelease) {
-      this.presenceTarget = 0
-      this.touchRelease = 0
+      this.presenceTarget = 0;
+      this.touchRelease = 0;
     }
-    const ease = 1 - Math.pow(1 - 0.22, dt)
-    this.mouse.x += (this.target.x - this.mouse.x) * ease
-    this.mouse.y += (this.target.y - this.mouse.y) * ease
-    const vx = (this.mouse.x - this.prevMouse.x) / dt
-    const vy = (this.mouse.y - this.prevMouse.y) / dt
-    this.prevMouse.x = this.mouse.x
-    this.prevMouse.y = this.mouse.y
-    this.mvel.x += (clamp(vx, -60, 60) - this.mvel.x) * 0.5
-    this.mvel.y += (clamp(vy, -60, 60) - this.mvel.y) * 0.5
-    const pk = this.presenceTarget > this.presence ? 0.1 : 0.035
-    this.presence += (this.presenceTarget - this.presence) * (1 - Math.pow(1 - pk, dt))
-    if (this.presence < 0.001 && this.presenceTarget === 0) this.presence = 0
-    const fk = this.presenceTarget > this.flowing ? 0.05 : 0.018
-    this.flowing += (this.presenceTarget - this.flowing) * (1 - Math.pow(1 - fk, dt))
-    if (this.flowing < 0.002 && this.presenceTarget === 0) this.flowing = 0
-    if (this.introT < 1) this.introT = Math.min(1, this.introT + Math.min(rawMs, 100) / 3200)
+    const ease = 1 - Math.pow(1 - 0.22, dt);
+    this.mouse.x += (this.target.x - this.mouse.x) * ease;
+    this.mouse.y += (this.target.y - this.mouse.y) * ease;
+    const vx = (this.mouse.x - this.prevMouse.x) / dt;
+    const vy = (this.mouse.y - this.prevMouse.y) / dt;
+    this.prevMouse.x = this.mouse.x;
+    this.prevMouse.y = this.mouse.y;
+    this.mvel.x += (clamp(vx, -60, 60) - this.mvel.x) * 0.5;
+    this.mvel.y += (clamp(vy, -60, 60) - this.mvel.y) * 0.5;
+    const pk = this.presenceTarget > this.presence ? 0.1 : 0.035;
+    this.presence +=
+      (this.presenceTarget - this.presence) * (1 - Math.pow(1 - pk, dt));
+    if (this.presence < 0.001 && this.presenceTarget === 0) this.presence = 0;
+    const fk = this.presenceTarget > this.flowing ? 0.05 : 0.018;
+    this.flowing +=
+      (this.presenceTarget - this.flowing) * (1 - Math.pow(1 - fk, dt));
+    if (this.flowing < 0.002 && this.presenceTarget === 0) this.flowing = 0;
+    if (this.introT < 1)
+      this.introT = Math.min(1, this.introT + Math.min(rawMs, 100) / 3200);
 
-    const interacting = this.presence > 0.001 || this.burst > 0
+    const interacting = this.presence > 0.001 || this.burst > 0;
     // settle is counted in simulated frames, so slow devices never snap mid-return
-    this.settle = interacting ? 0 : this.settle + dt
-    const active = interacting || this.settle < SETTLE_FRAMES || this.introT < 1
+    this.settle = interacting ? 0 : this.settle + dt;
+    const active =
+      interacting || this.settle < SETTLE_FRAMES || this.introT < 1;
 
     if (!active) {
-      if (this.flowDirty) this.clearFlow()
-      if (this.stateDirty) this.clearState()
+      if (this.flowDirty) this.clearFlow();
+      if (this.stateDirty) this.clearState();
       if (!ambientOn) {
-        this.draw()
-        this.firstFrame()
-        this.stop()
-        return
+        this.draw();
+        this.firstFrame();
+        this.stop();
+        return;
       }
-      this.raf = requestAnimationFrame(this.frame)
-      if (this.skip++ % 2) return
-      this.time += (dt * 2 * o.speed) / 60
-      this.draw()
-      this.firstFrame()
-      return
+      this.raf = requestAnimationFrame(this.frame);
+      if (this.skip++ % 2) return;
+      this.time += (dt * 2 * o.speed) / 60;
+      this.draw();
+      this.firstFrame();
+      return;
     }
-    this.raf = requestAnimationFrame(this.frame)
+    this.raf = requestAnimationFrame(this.frame);
     // the field speeds up while the material is being stirred
-    this.time += (dt * o.speed * (1 + this.flowing * 1.6)) / 60
-    this.stepFlow(dt)
-    this.stepSim(dt)
-    this.burst = Math.max(0, this.burst - 0.1 * dt)
-    this.draw()
-    this.firstFrame()
-  }
+    this.time += (dt * o.speed * (1 + this.flowing * 1.6)) / 60;
+    this.stepFlow(dt);
+    this.stepSim(dt);
+    this.burst = Math.max(0, this.burst - 0.1 * dt);
+    this.draw();
+    this.firstFrame();
+  };
 
   private firstFrame() {
     if (this.onFirstFrame) {
-      const cb = this.onFirstFrame
-      this.onFirstFrame = null
+      const cb = this.onFirstFrame;
+      this.onFirstFrame = null;
       // one more frame so the compositor has presented the canvas
-      requestAnimationFrame(() => cb())
+      requestAnimationFrame(() => cb());
     }
   }
 
   private stepFlow(dt: number) {
-    const gl = this.gl
-    const P = this.pFlow
-    const dst = 1 - this.flowIdx
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.flowFb[dst])
-    gl.viewport(0, 0, this.flowW, this.flowH)
-    gl.disable(gl.BLEND)
-    gl.useProgram(P.p)
-    gl.bindVertexArray(this.vao)
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx])
-    gl.uniform1i(P.u.uPrev, 0)
-    gl.uniform2f(P.u.uTexel, 1 / this.flowW, 1 / this.flowH)
-    const r = this.rect
-    gl.uniform2f(P.u.uMouse, (this.mouse.x - r.x) / r.w, (this.mouse.y - r.y) / r.h)
-    gl.uniform2f(P.u.uVel, clamp(this.mvel.x / 40, -1, 1), clamp(this.mvel.y / 40, -1, 1))
-    gl.uniform2f(P.u.uSize, r.w, r.h)
-    gl.uniform1f(P.u.uRadius, this.radiusPx())
-    gl.uniform1f(P.u.uPresence, Math.max(this.presence, this.burst))
-    gl.uniform1f(P.u.uDecay, Math.pow(0.968, dt))
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-    this.flowIdx = dst
-    this.flowDirty = true
+    const gl = this.gl;
+    const P = this.pFlow;
+    const dst = 1 - this.flowIdx;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.flowFb[dst]);
+    gl.viewport(0, 0, this.flowW, this.flowH);
+    gl.disable(gl.BLEND);
+    gl.useProgram(P.p);
+    gl.bindVertexArray(this.vao);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx]);
+    gl.uniform1i(P.u.uPrev, 0);
+    gl.uniform2f(P.u.uTexel, 1 / this.flowW, 1 / this.flowH);
+    const r = this.rect;
+    gl.uniform2f(
+      P.u.uMouse,
+      (this.mouse.x - r.x) / r.w,
+      (this.mouse.y - r.y) / r.h,
+    );
+    gl.uniform2f(
+      P.u.uVel,
+      clamp(this.mvel.x / 40, -1, 1),
+      clamp(this.mvel.y / 40, -1, 1),
+    );
+    gl.uniform2f(P.u.uSize, r.w, r.h);
+    gl.uniform1f(P.u.uRadius, this.radiusPx());
+    gl.uniform1f(P.u.uPresence, Math.max(this.presence, this.burst));
+    gl.uniform1f(P.u.uDecay, Math.pow(0.968, dt));
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.flowIdx = dst;
+    this.flowDirty = true;
   }
 
   private stepSim(dt: number) {
-    if (!this.n) return
-    const gl = this.gl
-    const P = this.pSim
-    const o = this.opts
-    const r = this.rect
-    const dst = 1 - this.stateIdx
-    const intro = o.reducedMotion || !o.intro ? 0 : Math.pow(1 - this.introT, 2)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.stateFb[dst])
-    gl.viewport(0, 0, TEX_W, this.texH)
-    gl.disable(gl.BLEND)
-    gl.useProgram(P.p)
-    gl.bindVertexArray(this.vao)
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, this.stateTex[this.stateIdx])
-    gl.uniform1i(P.u.uState, 0)
-    gl.activeTexture(gl.TEXTURE1)
-    gl.bindTexture(gl.TEXTURE_2D, this.homeTex)
-    gl.uniform1i(P.u.uHome, 1)
-    gl.activeTexture(gl.TEXTURE2)
-    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx])
-    gl.uniform1i(P.u.uFlow, 2)
-    gl.uniform2f(P.u.uSize, r.w, r.h)
-    gl.uniform2f(P.u.uMouse, this.mouse.x - r.x, this.mouse.y - r.y)
-    gl.uniform1f(P.u.uRadius, this.radiusPx())
-    gl.uniform1f(P.u.uPresence, Math.max(this.presence, this.burst))
-    gl.uniform1f(P.u.uStrength, this.strength() * (1 + this.burst * 1.5))
-    gl.uniform1f(P.u.uSpread, clamp(o.spread, 0, 2))
-    gl.uniform1f(P.u.uTurb, clamp(o.turbulence, 0, 2) * (o.reducedMotion ? 0.3 : 1))
-    gl.uniform1f(P.u.uReturn, clamp(o.returnSpeed, 0, 2))
-    gl.uniform1f(P.u.uTime, this.time)
-    gl.uniform1f(P.u.uDt, dt)
-    gl.uniform1f(P.u.uIntro, intro)
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-    this.stateIdx = dst
-    this.stateDirty = true
+    if (!this.n) return;
+    const gl = this.gl;
+    const P = this.pSim;
+    const o = this.opts;
+    const r = this.rect;
+    const dst = 1 - this.stateIdx;
+    const intro =
+      o.reducedMotion || !o.intro ? 0 : Math.pow(1 - this.introT, 2);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.stateFb[dst]);
+    gl.viewport(0, 0, TEX_W, this.texH);
+    gl.disable(gl.BLEND);
+    gl.useProgram(P.p);
+    gl.bindVertexArray(this.vao);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.stateTex[this.stateIdx]);
+    gl.uniform1i(P.u.uState, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.homeTex);
+    gl.uniform1i(P.u.uHome, 1);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx]);
+    gl.uniform1i(P.u.uFlow, 2);
+    gl.uniform2f(P.u.uSize, r.w, r.h);
+    gl.uniform2f(P.u.uMouse, this.mouse.x - r.x, this.mouse.y - r.y);
+    gl.uniform1f(P.u.uRadius, this.radiusPx());
+    gl.uniform1f(P.u.uPresence, Math.max(this.presence, this.burst));
+    gl.uniform1f(P.u.uStrength, this.strength() * (1 + this.burst * 1.5));
+    gl.uniform1f(P.u.uSpread, clamp(o.spread, 0, 2));
+    gl.uniform1f(
+      P.u.uTurb,
+      clamp(o.turbulence, 0, 2) * (o.reducedMotion ? 0.3 : 1),
+    );
+    gl.uniform1f(P.u.uReturn, clamp(o.returnSpeed, 0, 2));
+    gl.uniform1f(P.u.uTime, this.time);
+    gl.uniform1f(P.u.uDt, dt);
+    gl.uniform1f(P.u.uIntro, intro);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    this.stateIdx = dst;
+    this.stateDirty = true;
   }
 
   private draw() {
-    if (!this.ready || this.lost || this.destroyed) return
-    const gl = this.gl
-    const o = this.opts
-    const r = this.rect
-    const rm = o.reducedMotion
-    const introVis = rm || !o.intro ? 1 : Math.pow(this.introT, 2.2)
-    const base = o.ambient && !rm ? clamp(o.ambientIntensity, 0, 2) : 0
-    const amb = base + this.flowing * 0.85 * clamp(o.liquid, 0, 2) * (rm ? 0.3 : 1)
-    const rest = o.restStyle === "particles" ? 1 : 0
-    const [br, bg, bb] = o.bg
-    const [ir, ig, ib] = this.imgBg
-    const dpr = this.canvas.width / this.cssW
-    const pres = Math.max(this.presence, this.burst)
-    const mx = this.mouse.x - r.x
-    const my = this.mouse.y - r.y
+    if (!this.ready || this.lost || this.destroyed) return;
+    const gl = this.gl;
+    const o = this.opts;
+    const r = this.rect;
+    const rm = o.reducedMotion;
+    const introVis = rm || !o.intro ? 1 : Math.pow(this.introT, 2.2);
+    const base = o.ambient && !rm ? clamp(o.ambientIntensity, 0, 2) : 0;
+    const amb =
+      base + this.flowing * 0.85 * clamp(o.liquid, 0, 2) * (rm ? 0.3 : 1);
+    const rest = o.restStyle === "particles" ? 1 : 0;
+    const [br, bg, bb] = o.bg;
+    const [ir, ig, ib] = this.imgBg;
+    const dpr = this.canvas.width / this.cssW;
+    const pres = Math.max(this.presence, this.burst);
+    const mx = this.mouse.x - r.x;
+    const my = this.mouse.y - r.y;
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height)
-    gl.bindVertexArray(this.vao)
-    gl.disable(gl.BLEND)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    gl.bindVertexArray(this.vao);
+    gl.disable(gl.BLEND);
 
-    const I = this.pImg
-    gl.useProgram(I.p)
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, this.imgTex)
-    gl.uniform1i(I.u.uImg, 0)
-    gl.activeTexture(gl.TEXTURE1)
-    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx])
-    gl.uniform1i(I.u.uFlow, 1)
-    gl.uniform2f(I.u.uRes, this.cssW, this.cssH)
-    gl.uniform1f(I.u.uDpr, dpr)
-    gl.uniform4f(I.u.uRect, r.x, r.y, r.w, r.h)
-    gl.uniform3f(I.u.uBg, br, bg, bb)
-    gl.uniform3f(I.u.uImgBg, ir, ig, ib)
-    gl.uniform2f(I.u.uMouse, mx, my)
-    gl.uniform1f(I.u.uPresence, pres)
-    gl.uniform1f(I.u.uRadius, this.radiusPx())
-    gl.uniform1f(I.u.uStrength, this.strength())
-    gl.uniform1f(I.u.uTime, this.time)
-    gl.uniform1f(I.u.uAmbient, amb)
-    gl.uniform1f(I.u.uIntroVis, introVis)
-    gl.uniform1f(I.u.uRest, rest)
-    gl.uniform1f(I.u.uAlphaMode, this.alphaMode ? 1 : 0)
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+    const I = this.pImg;
+    gl.useProgram(I.p);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.imgTex);
+    gl.uniform1i(I.u.uImg, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx]);
+    gl.uniform1i(I.u.uFlow, 1);
+    gl.uniform2f(I.u.uRes, this.cssW, this.cssH);
+    gl.uniform1f(I.u.uDpr, dpr);
+    gl.uniform4f(I.u.uRect, r.x, r.y, r.w, r.h);
+    gl.uniform3f(I.u.uBg, br, bg, bb);
+    gl.uniform3f(I.u.uImgBg, ir, ig, ib);
+    gl.uniform2f(I.u.uMouse, mx, my);
+    gl.uniform1f(I.u.uPresence, pres);
+    gl.uniform1f(I.u.uRadius, this.radiusPx());
+    gl.uniform1f(I.u.uStrength, this.strength());
+    gl.uniform1f(I.u.uTime, this.time);
+    gl.uniform1f(I.u.uAmbient, amb);
+    gl.uniform1f(I.u.uIntroVis, introVis);
+    gl.uniform1f(I.u.uRest, rest);
+    gl.uniform1f(I.u.uAlphaMode, this.alphaMode ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     // particles are invisible at rest in "image" mode: skip them entirely
-    if (!this.n || (!this.stateDirty && rest === 0 && introVis >= 1)) return
+    if (!this.n || (!this.stateDirty && rest === 0 && introVis >= 1)) return;
 
-    const P = this.pPart
-    gl.useProgram(P.p)
-    gl.enable(gl.BLEND)
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, this.stateTex[this.stateIdx])
-    gl.uniform1i(P.u.uState, 0)
-    gl.activeTexture(gl.TEXTURE1)
-    gl.bindTexture(gl.TEXTURE_2D, this.homeTex)
-    gl.uniform1i(P.u.uHome, 1)
-    gl.activeTexture(gl.TEXTURE2)
-    gl.bindTexture(gl.TEXTURE_2D, this.colTex)
-    gl.uniform1i(P.u.uCol, 2)
-    gl.activeTexture(gl.TEXTURE3)
-    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx])
-    gl.uniform1i(P.u.uFlow, 3)
-    gl.uniform1i(P.u.uTexW, TEX_W)
-    gl.uniform4f(P.u.uRect, r.x, r.y, r.w, r.h)
-    gl.uniform2f(P.u.uRes, this.cssW, this.cssH)
-    gl.uniform2f(P.u.uMouse, mx, my)
-    gl.uniform1f(P.u.uRadius, this.radiusPx())
-    gl.uniform1f(P.u.uPresence, pres)
-    const spacing = r.w / this.gridW
-    gl.uniform1f(P.u.uDot, spacing * 1.45 * clamp(o.dotSize, 0.2, 3))
-    gl.uniform1f(P.u.uTime, this.time)
-    gl.uniform1f(P.u.uAmbient, amb)
-    gl.uniform1f(P.u.uStreak, (o.streaks ? 1 : 0) * (0.45 + 0.55 * introVis))
-    gl.uniform1f(P.u.uIntroVis, introVis)
-    gl.uniform1f(P.u.uRest, rest)
-    gl.uniform1f(P.u.uDpr, dpr)
-    if (this.alphaMode) gl.uniform3f(P.u.uTint, 1, 1, 1)
-    else gl.uniform3f(P.u.uTint, br / Math.max(ir, 0.001), bg / Math.max(ig, 0.001), bb / Math.max(ib, 0.001))
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.n)
-    gl.disable(gl.BLEND)
+    const P = this.pPart;
+    gl.useProgram(P.p);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.stateTex[this.stateIdx]);
+    gl.uniform1i(P.u.uState, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.homeTex);
+    gl.uniform1i(P.u.uHome, 1);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.colTex);
+    gl.uniform1i(P.u.uCol, 2);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this.flowTex[this.flowIdx]);
+    gl.uniform1i(P.u.uFlow, 3);
+    gl.uniform1i(P.u.uTexW, TEX_W);
+    gl.uniform4f(P.u.uRect, r.x, r.y, r.w, r.h);
+    gl.uniform2f(P.u.uRes, this.cssW, this.cssH);
+    gl.uniform2f(P.u.uMouse, mx, my);
+    gl.uniform1f(P.u.uRadius, this.radiusPx());
+    gl.uniform1f(P.u.uPresence, pres);
+    const spacing = r.w / this.gridW;
+    gl.uniform1f(P.u.uDot, spacing * 1.45 * clamp(o.dotSize, 0.2, 3));
+    gl.uniform1f(P.u.uTime, this.time);
+    gl.uniform1f(P.u.uAmbient, amb);
+    gl.uniform1f(P.u.uStreak, (o.streaks ? 1 : 0) * (0.45 + 0.55 * introVis));
+    gl.uniform1f(P.u.uIntroVis, introVis);
+    gl.uniform1f(P.u.uRest, rest);
+    gl.uniform1f(P.u.uDpr, dpr);
+    if (this.alphaMode) gl.uniform3f(P.u.uTint, 1, 1, 1);
+    else
+      gl.uniform3f(
+        P.u.uTint,
+        br / Math.max(ir, 0.001),
+        bg / Math.max(ig, 0.001),
+        bb / Math.max(ib, 0.001),
+      );
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, this.n);
+    gl.disable(gl.BLEND);
   }
 
   destroy() {
-    this.destroyed = true
-    this.stop()
-    this.canvas.removeEventListener("webglcontextlost", this.onLost)
-    const gl = this.gl
+    this.destroyed = true;
+    this.stop();
+    this.canvas.removeEventListener("webglcontextlost", this.onLost);
+    const gl = this.gl;
     if (!this.lost) {
-      gl.deleteBuffer(this.quad)
-      gl.deleteVertexArray(this.vao)
-      for (const t of [...this.flowTex, ...this.stateTex, this.imgTex, this.homeTex, this.colTex]) if (t) gl.deleteTexture(t)
-      for (const f of [...this.flowFb, ...this.stateFb]) gl.deleteFramebuffer(f)
-      for (const p of [this.pFlow, this.pSim, this.pPart, this.pImg]) if (p) gl.deleteProgram(p.p)
+      gl.deleteBuffer(this.quad);
+      gl.deleteVertexArray(this.vao);
+      for (const t of [
+        ...this.flowTex,
+        ...this.stateTex,
+        this.imgTex,
+        this.homeTex,
+        this.colTex,
+      ])
+        if (t) gl.deleteTexture(t);
+      for (const f of [...this.flowFb, ...this.stateFb])
+        gl.deleteFramebuffer(f);
+      for (const p of [this.pFlow, this.pSim, this.pPart, this.pImg])
+        if (p) gl.deleteProgram(p.p);
     }
-    gl.getExtension("WEBGL_lose_context")?.loseContext()
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
   }
 }
 
@@ -1016,107 +1170,115 @@ class LiquidEngine {
    ──────────────────────────────────────────────────────────────────── */
 
 export interface SculptureHeroLink {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 export interface SculptureHeroProps {
   /** Sculpture image (light theme). Must be CORS-enabled when hosted on another domain. */
-  src?: string
+  src?: string;
   /** Optional image for the dark theme. */
-  darkSrc?: string
+  darkSrc?: string;
   /** Optional image for phones (portrait layouts), light and dark. */
-  mobileSrc?: string
-  mobileDarkSrc?: string
-  imageAlt?: string
+  mobileSrc?: string;
+  mobileDarkSrc?: string;
+  imageAlt?: string;
   /** Only for images without transparency: the flat background colour inside the image. */
-  imageBackground?: string
+  imageBackground?: string;
 
-  brand?: string
-  navLinks?: SculptureHeroLink[]
-  navCta?: SculptureHeroLink
-  showNav?: boolean
+  brand?: string;
+  navLinks?: SculptureHeroLink[];
+  navCta?: SculptureHeroLink;
+  showNav?: boolean;
 
-  eyebrow?: string
-  headline?: string
+  eyebrow?: string;
+  headline?: string;
   /** Words of the headline to set in the italic accent face. */
-  headlineAccent?: string
-  body?: string
-  primaryCta?: SculptureHeroLink
-  secondaryCta?: SculptureHeroLink
-  hint?: string
-  hintTouch?: string
+  headlineAccent?: string;
+  body?: string;
+  primaryCta?: SculptureHeroLink;
+  secondaryCta?: SculptureHeroLink;
+  hint?: string;
+  hintTouch?: string;
 
   /** Light-theme background. */
-  background?: string
+  background?: string;
   /** Dark-theme background. */
-  darkBackground?: string
+  darkBackground?: string;
   /** Theme on load. */
-  theme?: "light" | "dark"
+  theme?: "light" | "dark";
   /** Show the light/dark switch in the nav. */
-  themeToggle?: boolean
-  textColor?: string
-  accentColor?: string
-  headingFont?: string
-  accentFont?: string
-  bodyFont?: string
+  themeToggle?: boolean;
+  textColor?: string;
+  accentColor?: string;
+  headingFont?: string;
+  accentFont?: string;
+  bodyFont?: string;
   /** Load the default Google Fonts (Geist + Instrument Serif, both OFL). */
-  loadFonts?: boolean
+  loadFonts?: boolean;
 
   /** 1 = default size for the breakpoint. */
-  sculptureScale?: number
-  mobileSculptureScale?: number
+  sculptureScale?: number;
+  mobileSculptureScale?: number;
+  /** Minimum WebGL stage scale. The stage auto-expands to keep the image uncropped. */
+  stageScale?: number;
   /** "bleed" lets the sculpture overflow its box; "contain" keeps it fully visible. */
-  sculptureFit?: "bleed" | "contain"
+  sculptureFit?: "bleed" | "contain";
   /** Offset in % of the hero width / height. */
-  sculptureX?: number
-  sculptureY?: number
+  sculptureX?: number;
+  sculptureY?: number;
+  /** Independent offsets used when the stage is narrower than 640px. */
+  mobileSculptureX?: number;
+  mobileSculptureY?: number;
 
-  interactive?: boolean
+  interactive?: boolean;
   /** 0 – 2 */
-  strength?: number
+  strength?: number;
   /** Radius of the disturbance, in px at 1440px wide. */
-  radius?: number
+  radius?: number;
   /** 0 – 2, multiplies the particle count. */
-  particleDensity?: number
+  particleDensity?: number;
   /** 0 – 3, size of each particle relative to the grid. */
-  dotSize?: number
+  dotSize?: number;
   /** 0 – 2, how far particles travel when disturbed. */
-  particleSpread?: number
+  particleSpread?: number;
   /** 0 – 2, liquid swirl of the disturbed material. */
-  turbulence?: number
+  turbulence?: number;
   /** 0 – 2, how much the whole sculpture flows while hovered. */
-  liquid?: number
+  liquid?: number;
   /** Stretch fast particles into liquid streaks. */
-  streaks?: boolean
+  streaks?: boolean;
   /** At rest: the crisp image, or the particle field itself. */
-  restStyle?: "image" | "particles"
+  restStyle?: "image" | "particles";
   /** 0 – 2, how quickly the material settles back. */
-  returnSpeed?: number
-  ambient?: boolean
+  returnSpeed?: number;
+  ambient?: boolean;
   /** 0 – 2 */
-  ambientIntensity?: number
+  ambientIntensity?: number;
   /** 0.25 – 3 */
-  speed?: number
+  speed?: number;
   /** Assembly animation on load. */
-  intro?: boolean
+  intro?: boolean;
 
   /** Hero height. Default fills the screen exactly, no scrolling. */
-  height?: string
+  height?: string;
   /** Giant faint word behind the sculpture. Empty to hide. */
-  backdropText?: string
+  backdropText?: string;
   /** Render only the sculpture stage, for embedding inside another layout. */
-  showContent?: boolean
-  showCredit?: boolean
-  className?: string
-  style?: React.CSSProperties
+  showContent?: boolean;
+  showCredit?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const DEFAULTS = {
   src: "https://cdn.21st.dev/assets/mirror/ae/ae8c3de9003460e59182e950ccd345f68f27f9d0e4808b64c92c962a4eca7120.webp",
-  darkSrc: "https://cdn.21st.dev/assets/mirror/a1/a1fa387b6e417b26a25f317559c87cce4d241c1052c52a2b3bc2966b2aaf9b65.webp",
-  mobileSrc: "https://cdn.21st.dev/assets/mirror/b0/b0c8d8e5d64b8cec906a3b390e3dc7c9a5af08334bf0632873c601782cb4bc46.webp",
-  mobileDarkSrc: "https://cdn.21st.dev/assets/mirror/9a/9a82cb59be1bfde59855b79d7a565e487155a89f4d52eac74dcc10e267b2b6d1.webp",
+  darkSrc:
+    "https://cdn.21st.dev/assets/mirror/a1/a1fa387b6e417b26a25f317559c87cce4d241c1052c52a2b3bc2966b2aaf9b65.webp",
+  mobileSrc:
+    "https://cdn.21st.dev/assets/mirror/b0/b0c8d8e5d64b8cec906a3b390e3dc7c9a5af08334bf0632873c601782cb4bc46.webp",
+  mobileDarkSrc:
+    "https://cdn.21st.dev/assets/mirror/9a/9a82cb59be1bfde59855b79d7a565e487155a89f4d52eac74dcc10e267b2b6d1.webp",
   imageAlt: "Abstract sculpture of interwoven metallic filaments and particles",
   imageBackground: "#EAE9E7",
   brand: "Forma®",
@@ -1142,7 +1304,7 @@ const DEFAULTS = {
   headingFont: "'Geist', 'Helvetica Neue', Arial, sans-serif",
   accentFont: "'Instrument Serif', 'Times New Roman', serif",
   bodyFont: "'Geist', 'Helvetica Neue', Arial, sans-serif",
-}
+};
 
 /* ────────────────────────────────────────────────────────────────────
    Layout
@@ -1155,40 +1317,50 @@ function computeRect(
   h: number,
   aspect: number,
   band: { top: number; bottom: number },
-  p: { scale: number; mobileScale: number; x: number; y: number },
-  fit: "bleed" | "contain"
+  p: {
+    scale: number;
+    mobileScale: number;
+    x: number;
+    y: number;
+    mobileX: number;
+    mobileY: number;
+  },
+  fit: "bleed" | "contain",
 ): Rect {
-  const bandH = Math.max(80, band.bottom - band.top)
-  const cx = w * (0.5 + p.x / 100)
-  const cy = (band.top + band.bottom) / 2 + h * (p.y / 100)
+  const bandH = Math.max(80, band.bottom - band.top);
+  const isMobile = w < 640;
+  const offsetX = isMobile ? p.mobileX : p.x;
+  const offsetY = isMobile ? p.mobileY : p.y;
+  const cx = w * (0.5 + offsetX / 100);
+  const cy = (band.top + band.bottom) / 2 + h * (offsetY / 100);
 
   if (fit === "contain") {
-    // Never crop the sculpture: fit it inside the available band with a small margin.
-    const s = Math.min(1, w < 640 ? p.mobileScale : p.scale)
-    const rw = Math.min(w * 0.98, bandH * 0.98 * aspect) * s
-    const rh = rw / aspect
-    return { x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh }
+    // Fit inside the band; the caller may scale up because the canvas auto-pads.
+    const s = w < 640 ? p.mobileScale : p.scale;
+    const rw = Math.min(w * 0.98, bandH * 0.98 * aspect) * s;
+    const rh = rw / aspect;
+    return { x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh };
   }
 
-  let rw: number
-  let maxH: number
+  let rw: number;
+  let maxH: number;
   if (w >= 1024) {
-    rw = w * 1.02 * p.scale
-    maxH = bandH * 1.1 * p.scale
+    rw = w * 1.02 * p.scale;
+    maxH = bandH * 1.1 * p.scale;
   } else if (w >= 640) {
-    rw = w * 1.3 * p.scale
-    maxH = bandH * 1.15 * p.scale
+    rw = w * 1.3 * p.scale;
+    maxH = bandH * 1.15 * p.scale;
   } else if (aspect < 1.3) {
     // portrait image for phones: fills the width, may tuck under the headline
-    rw = w * 1.0 * p.mobileScale
-    maxH = bandH * 1.0 * p.mobileScale
+    rw = w * 1.0 * p.mobileScale;
+    maxH = bandH * 1.0 * p.mobileScale;
   } else {
-    rw = w * 1.9 * p.mobileScale
-    maxH = bandH * 1.2 * p.mobileScale
+    rw = w * 1.9 * p.mobileScale;
+    maxH = bandH * 1.2 * p.mobileScale;
   }
-  if (rw / aspect > maxH) rw = maxH * aspect
-  const rh = rw / aspect
-  return { x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh }
+  if (rw / aspect > maxH) rw = maxH * aspect;
+  const rh = rw / aspect;
+  return { x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh };
 }
 
 /* ────────────────────────────────────────────────────────────────────
@@ -1273,53 +1445,86 @@ const CSS = `
   .sh-hint::before{animation:none}
   .sh-canvas,.sh-fallback,.sh-btn,.sh-btn svg,.sh-txt svg{transition:none}
 }
-`
+`;
 
 const SunIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 16 16"
+    fill="none"
+    aria-hidden="true"
+  >
     <circle cx="8" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.3" />
-    <path d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"
-      stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    <path
+      d="M8 1.2v1.6M8 13.2v1.6M1.2 8h1.6M13.2 8h1.6M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M3.2 12.8l1.1-1.1M11.7 4.3l1.1-1.1"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
   </svg>
-)
+);
 
 const MoonIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M13.6 10.1A5.9 5.9 0 0 1 5.9 2.4a5.9 5.9 0 1 0 7.7 7.7Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 16 16"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M13.6 10.1A5.9 5.9 0 0 1 5.9 2.4a5.9 5.9 0 1 0 7.7 7.7Z"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinejoin="round"
+    />
   </svg>
-)
+);
 
 const Arrow = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M2 7h10M8 3l4 4-4 4"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
-)
+);
 
 /* ────────────────────────────────────────────────────────────────────
    Component
    ──────────────────────────────────────────────────────────────────── */
 
-let fontsInjected = false
+let fontsInjected = false;
 function injectFonts() {
-  if (fontsInjected || typeof document === "undefined") return
-  fontsInjected = true
-  const id = "sh-fonts"
-  if (document.getElementById(id)) return
-  const l = document.createElement("link")
-  l.id = id
-  l.rel = "stylesheet"
+  if (fontsInjected || typeof document === "undefined") return;
+  fontsInjected = true;
+  const id = "sh-fonts";
+  if (document.getElementById(id)) return;
+  const l = document.createElement("link");
+  l.id = id;
+  l.rel = "stylesheet";
   l.href =
-    "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
-  document.head.appendChild(l)
+    "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap";
+  document.head.appendChild(l);
 }
 
 function renderHeadline(text: string, accent: string) {
-  const lines = text.split("\n")
+  const lines = text.split("\n");
   return lines.map((line, li) => {
-    let content: React.ReactNode = line
-    const a = accent && accent.trim()
+    let content: React.ReactNode = line;
+    const a = accent && accent.trim();
     if (a) {
-      const idx = line.indexOf(a)
+      const idx = line.indexOf(a);
       if (idx >= 0) {
         content = (
           <>
@@ -1327,15 +1532,15 @@ function renderHeadline(text: string, accent: string) {
             <span className="sh-accent">{a}</span>
             {line.slice(idx + a.length)}
           </>
-        )
+        );
       }
     }
     return (
       <span className="sh-line" key={li}>
         {content}
       </span>
-    )
-  })
+    );
+  });
 }
 
 export default function SculptureHero(props: SculptureHeroProps) {
@@ -1370,9 +1575,12 @@ export default function SculptureHero(props: SculptureHeroProps) {
     loadFonts = true,
     sculptureScale = 1,
     mobileSculptureScale = 1,
+    stageScale = 1,
     sculptureFit = "bleed",
     sculptureX = 0,
     sculptureY = 0,
+    mobileSculptureX = 0,
+    mobileSculptureY = 0,
     interactive = true,
     strength = 1,
     radius = 220,
@@ -1394,49 +1602,67 @@ export default function SculptureHero(props: SculptureHeroProps) {
     showCredit = true,
     className,
     style,
-  } = props
+  } = props;
 
-  const rootRef = React.useRef<HTMLElement>(null)
-  const stageRef = React.useRef<HTMLDivElement>(null)
-  const imgRef = React.useRef<HTMLImageElement>(null)
-  const hintRef = React.useRef<HTMLDivElement>(null)
-  const navRef = React.useRef<HTMLElement>(null)
-  const contentRef = React.useRef<HTMLDivElement>(null)
-  const backdropRef = React.useRef<HTMLDivElement>(null)
-  const engineRef = React.useRef<LiquidEngine | null>(null)
-  const aspectRef = React.useRef(1983 / 793)
-  const [isTouch, setIsTouch] = React.useState(false)
+  const minStageScaleRef = React.useRef(stageScale);
+  minStageScaleRef.current = clamp(stageScale, 0.5, 2.5);
 
-  const layout = React.useRef({ scale: sculptureScale, mobileScale: mobileSculptureScale, x: sculptureX, y: sculptureY })
+  const rootRef = React.useRef<HTMLElement>(null);
+  const stageRef = React.useRef<HTMLDivElement>(null);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+  const hintRef = React.useRef<HTMLDivElement>(null);
+  const navRef = React.useRef<HTMLElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const backdropRef = React.useRef<HTMLDivElement>(null);
+  const engineRef = React.useRef<LiquidEngine | null>(null);
+  const aspectRef = React.useRef(1983 / 793);
+  const [isTouch, setIsTouch] = React.useState(false);
+
+  const layout = React.useRef({
+    scale: sculptureScale,
+    mobileScale: mobileSculptureScale,
+    x: sculptureX,
+    y: sculptureY,
+    mobileX: mobileSculptureX,
+    mobileY: mobileSculptureY,
+  });
+
   layout.current = {
     scale: clamp(sculptureScale, 0.3, 3),
     mobileScale: clamp(mobileSculptureScale, 0.3, 3),
     x: sculptureX,
     y: sculptureY,
-  }
-  const fitRef = React.useRef(sculptureFit)
-  fitRef.current = sculptureFit
+    mobileX: mobileSculptureX,
+    mobileY: mobileSculptureY,
+  };
+  const fitRef = React.useRef(sculptureFit);
+  fitRef.current = sculptureFit;
 
-  const [mode, setMode] = React.useState<"light" | "dark">(theme)
-  React.useEffect(() => setMode(theme), [theme])
-  const background = mode === "dark" ? darkBackground : lightBackground
-  const bgRgb = React.useMemo(() => hexToRgb(background, [0.92, 0.91, 0.9]), [background])
+  const [mode, setMode] = React.useState<"light" | "dark">(theme);
+  React.useEffect(() => setMode(theme), [theme]);
+  const background = mode === "dark" ? darkBackground : lightBackground;
+  const bgRgb = React.useMemo(
+    () => hexToRgb(background, [0.92, 0.91, 0.9]),
+    [background],
+  );
   // text follows the background unless set: light on dark grounds, dark on light ones
-  const darkBg = bgRgb[0] * 0.2126 + bgRgb[1] * 0.7152 + bgRgb[2] * 0.0722 < 0.45
-  const fg = textColor || (darkBg ? "#F1EFEA" : DEFAULTS.textColor)
-  const acc = accentColor || fg
+  const darkBg =
+    bgRgb[0] * 0.2126 + bgRgb[1] * 0.7152 + bgRgb[2] * 0.0722 < 0.45;
+  const fg = textColor || (darkBg ? "#F1EFEA" : DEFAULTS.textColor);
+  const acc = accentColor || fg;
   const imgBgRgb = React.useMemo(
-    () => (imageBackground ? hexToRgb(imageBackground, [0.918, 0.914, 0.906]) : null),
-    [imageBackground]
-  )
-  const [isMobile, setIsMobile] = React.useState(false)
-  const mobileRef = React.useRef(false)
+    () =>
+      imageBackground ? hexToRgb(imageBackground, [0.918, 0.914, 0.906]) : null,
+    [imageBackground],
+  );
+  const [isMobile, setIsMobile] = React.useState(false);
+  const mobileRef = React.useRef(false);
   // pick the image for the current theme and layout, falling back sensibly
   const activeSrc =
     (isMobile && mode === "dark" && (mobileDarkSrc || darkSrc)) ||
     (isMobile && mode === "light" && mobileSrc) ||
     (mode === "dark" && darkSrc) ||
-    src
+    src;
 
   const engineOpts = (rm: boolean): EngineOptions => ({
     interactive,
@@ -1457,201 +1683,281 @@ export default function SculptureHero(props: SculptureHeroProps) {
     reducedMotion: rm,
     bg: bgRgb,
     imgBg: imgBgRgb,
-  })
-  const optsRef = React.useRef(engineOpts)
-  optsRef.current = engineOpts
+  });
+  const optsRef = React.useRef(engineOpts);
+  optsRef.current = engineOpts;
 
   React.useEffect(() => {
-    if (loadFonts) injectFonts()
-  }, [loadFonts])
+    if (loadFonts) injectFonts();
+  }, [loadFonts]);
 
   const relayout = React.useCallback(() => {
-    const root = rootRef.current
-    if (!root) return
-    const w = root.clientWidth
-    const h = root.clientHeight
-    const mob = w < 640
+    const root = rootRef.current;
+    const stage = stageRef.current;
+    if (!root || !stage) return;
+
+    // 1) Place and size the image in ROOT coordinates. This keeps the visual
+    //    independent of how much canvas padding is needed.
+    const rootW = root.clientWidth;
+    const rootH = root.clientHeight;
+    const mob = rootW < 640;
     if (mob !== mobileRef.current) {
-      mobileRef.current = mob
-      setIsMobile(mob)
+      mobileRef.current = mob;
+      setIsMobile(mob);
     }
-    const nav = navRef.current
-    const content = contentRef.current
+    const nav = navRef.current;
+    const content = contentRef.current;
     const band = {
       top: nav ? nav.offsetTop + nav.offsetHeight + 8 : 16,
-      bottom: content ? content.offsetTop - 8 : h,
-    }
-    // a portrait sculpture on phones dissolves into the top of the copy
-    if (mob && aspectRef.current < 1.3 && content) band.bottom += content.offsetHeight * 0.3
-    const rect = computeRect(w, h, aspectRef.current, band, layout.current, fitRef.current)
-    const bd = backdropRef.current
+      bottom: content ? content.offsetTop - 8 : rootH,
+    };
+    if (mob && aspectRef.current < 1.3 && content)
+      band.bottom += content.offsetHeight * 0.3;
+    const imageRect = computeRect(
+      rootW,
+      rootH,
+      aspectRef.current,
+      band,
+      layout.current,
+      fitRef.current,
+    );
+
+    // 2) Grow the canvas just enough that the image never touches its edge.
+    //    The root itself stays exactly 100% of its container.
+    const pad = Math.max(24, rootW * 0.04);
+    const needW =
+      2 * Math.max(Math.abs(imageRect.x), Math.abs(imageRect.x + imageRect.w)) +
+      pad;
+    const needH =
+      2 * Math.max(Math.abs(imageRect.y), Math.abs(imageRect.y + imageRect.h)) +
+      pad;
+    const scale = Math.min(
+      3,
+      Math.max(1, needW / rootW, needH / rootH, minStageScaleRef.current),
+    );
+    stage.style.inset = `${((1 - scale) / 2) * 100}%`;
+
+    // 3) Convert the image rect into the enlarged canvas coordinate system.
+    const w = stage.clientWidth;
+    const h = stage.clientHeight;
+    const stageLeft = stage.offsetLeft;
+    const stageTop = stage.offsetTop;
+    const rect = {
+      x: imageRect.x - stageLeft,
+      y: imageRect.y - stageTop,
+      w: imageRect.w,
+      h: imageRect.h,
+    };
+
+    const bd = backdropRef.current;
     if (bd) {
-      const chars = Math.max(1, (bd.textContent || "").length)
-      bd.style.fontSize = Math.min((band.bottom - band.top) * 0.95, (w * 0.92) / (chars * 0.56)) + "px"
-      bd.style.top = (band.top + band.bottom) / 2 + "px"
+      const chars = Math.max(1, (bd.textContent || "").length);
+      bd.style.fontSize =
+        Math.min(
+          (band.bottom - band.top) * 0.95,
+          (rootW * 0.92) / (chars * 0.56),
+        ) + "px";
+      bd.style.left = rootW / 2 + "px";
+      bd.style.top = (band.top + band.bottom) / 2 + "px";
     }
-    const img = imgRef.current
+    const img = imgRef.current;
     if (img) {
-      img.style.left = rect.x + "px"
-      img.style.top = rect.y + "px"
-      img.style.width = rect.w + "px"
-      img.style.height = rect.h + "px"
+      img.style.left = rect.x + "px";
+      img.style.top = rect.y + "px";
+      img.style.width = rect.w + "px";
+      img.style.height = rect.h + "px";
     }
-    const hintEl = hintRef.current
+    const hintEl = hintRef.current;
     if (hintEl) {
       // the portrait phone sculpture runs into the copy: no room for the cue there
-      hintEl.style.display = mob && aspectRef.current < 1.3 ? "none" : ""
-      hintEl.style.left = clamp(rect.x + rect.w / 2, 80, w - 80) + "px"
-      hintEl.style.top = Math.min(rect.y + rect.h * 0.95, band.bottom - 20) + "px"
+      hintEl.style.display = mob && aspectRef.current < 1.3 ? "none" : "";
+      hintEl.style.left =
+        clamp(imageRect.x + imageRect.w / 2, 80, rootW - 80) + "px";
+      hintEl.style.top =
+        Math.min(imageRect.y + imageRect.h * 0.95, band.bottom - 20) + "px";
     }
-    engineRef.current?.resize(w, h, rect)
-  }, [])
+    engineRef.current?.resize(w, h, rect);
+  }, []);
 
   // engine lifecycle (re-created only when the image changes)
   React.useEffect(() => {
-    const root = rootRef.current
-    const stage = stageRef.current
-    if (!root || !stage) return
+    const root = rootRef.current;
+    const stage = stageRef.current;
+    if (!root || !stage) return;
     // a fresh canvas per engine: a released WebGL context can never be reused
-    const canvas = document.createElement("canvas")
-    canvas.className = "sh-canvas"
-    stage.appendChild(canvas)
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const coarse = window.matchMedia("(hover: none), (pointer: coarse)")
-    setIsTouch(coarse.matches)
-    let engine: LiquidEngine | null = null
+    const canvas = document.createElement("canvas");
+    canvas.className = "sh-canvas";
+    stage.appendChild(canvas);
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarse = window.matchMedia("(hover: none), (pointer: coarse)");
+    setIsTouch(coarse.matches);
+    let engine: LiquidEngine | null = null;
     const fail = () => {
-      root.dataset.gl = "off"
-    }
+      root.dataset.gl = "off";
+    };
     try {
-      engine = new LiquidEngine(canvas, optsRef.current(mq.matches), fail)
-      engineRef.current = engine
+      engine = new LiquidEngine(canvas, optsRef.current(mq.matches), fail);
+      engineRef.current = engine;
     } catch {
-      fail()
+      fail();
     }
 
-    const ro = new ResizeObserver(() => relayout())
-    ro.observe(root)
+    const ro = new ResizeObserver(() => relayout());
+    ro.observe(root);
     // the band moves when fonts load or the copy reflows
-    if (navRef.current) ro.observe(navRef.current)
-    if (contentRef.current) ro.observe(contentRef.current)
+    if (navRef.current) ro.observe(navRef.current);
+    if (contentRef.current) ro.observe(contentRef.current);
     const io = new IntersectionObserver((entries) => {
-      for (const e of entries) engine?.setVisible(e.isIntersecting && !document.hidden)
-    })
-    io.observe(root)
-    const onVis = () => engine?.setVisible(!document.hidden)
-    document.addEventListener("visibilitychange", onVis)
-    const onMq = () => engine?.setOptions({ reducedMotion: mq.matches })
-    mq.addEventListener?.("change", onMq)
+      for (const e of entries)
+        engine?.setVisible(e.isIntersecting && !document.hidden);
+    });
+    io.observe(root);
+    const onVis = () => engine?.setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    const onMq = () => engine?.setOptions({ reducedMotion: mq.matches });
+    mq.addEventListener?.("change", onMq);
 
+    // In embedded mode the stage is the enlarged interaction surface; in the
+    // standalone hero the root still owns the events (the stage is decorative).
+    const eventTarget = showContent ? root : stage;
     const pos = (e: PointerEvent) => {
-      const b = root.getBoundingClientRect()
-      return [e.clientX - b.left, e.clientY - b.top] as const
-    }
-    let touched = false
+      const b = stage.getBoundingClientRect();
+      return [e.clientX - b.left, e.clientY - b.top] as const;
+    };
+    let touched = false;
     const markTouched = () => {
       if (!touched) {
-        touched = true
-        root.dataset.touched = "1"
+        touched = true;
+        root.dataset.touched = "1";
       }
-    }
+    };
     const onMove = (e: PointerEvent) => {
-      const [x, y] = pos(e)
-      const touch = e.pointerType === "touch"
-      if (touch && e.buttons === 0 && e.pressure === 0) return
-      engine?.pointer("move", x, y, touch)
-      markTouched()
-    }
+      const [x, y] = pos(e);
+      const touch = e.pointerType === "touch";
+      if (touch && e.buttons === 0 && e.pressure === 0) return;
+      engine?.pointer("move", x, y, touch);
+      markTouched();
+    };
     const onDown = (e: PointerEvent) => {
-      const [x, y] = pos(e)
-      engine?.pointer("down", x, y, e.pointerType === "touch")
-      markTouched()
-    }
+      const [x, y] = pos(e);
+      engine?.pointer("down", x, y, e.pointerType === "touch");
+      markTouched();
+    };
     const onUp = (e: PointerEvent) => {
-      const [x, y] = pos(e)
-      engine?.pointer("up", x, y, e.pointerType === "touch")
-    }
+      const [x, y] = pos(e);
+      engine?.pointer("up", x, y, e.pointerType === "touch");
+    };
     const onLeave = (e: PointerEvent) => {
-      const [x, y] = pos(e)
-      engine?.pointer("leave", x, y, e.pointerType === "touch")
-    }
-    root.addEventListener("pointermove", onMove, { passive: true })
-    root.addEventListener("pointerdown", onDown, { passive: true })
-    root.addEventListener("pointerup", onUp, { passive: true })
-    root.addEventListener("pointercancel", onUp, { passive: true })
-    root.addEventListener("pointerleave", onLeave, { passive: true })
+      const [x, y] = pos(e);
+      engine?.pointer("leave", x, y, e.pointerType === "touch");
+    };
+    eventTarget.addEventListener("pointermove", onMove, { passive: true });
+    eventTarget.addEventListener("pointerdown", onDown, { passive: true });
+    eventTarget.addEventListener("pointerup", onUp, { passive: true });
+    eventTarget.addEventListener("pointercancel", onUp, { passive: true });
+    eventTarget.addEventListener("pointerleave", onLeave, { passive: true });
 
     return () => {
-      ro.disconnect()
-      io.disconnect()
-      document.removeEventListener("visibilitychange", onVis)
-      mq.removeEventListener?.("change", onMq)
-      root.removeEventListener("pointermove", onMove)
-      root.removeEventListener("pointerdown", onDown)
-      root.removeEventListener("pointerup", onUp)
-      root.removeEventListener("pointercancel", onUp)
-      root.removeEventListener("pointerleave", onLeave)
-      engine?.destroy()
-      engineRef.current = null
-      canvas.remove()
-      delete root.dataset.gl
-    }
-  }, [relayout])
+      ro.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      mq.removeEventListener?.("change", onMq);
+      eventTarget.removeEventListener("pointermove", onMove);
+      eventTarget.removeEventListener("pointerdown", onDown);
+      eventTarget.removeEventListener("pointerup", onUp);
+      eventTarget.removeEventListener("pointercancel", onUp);
+      eventTarget.removeEventListener("pointerleave", onLeave);
+      engine?.destroy();
+      engineRef.current = null;
+      canvas.remove();
+      delete root.dataset.gl;
+    };
+  }, [relayout, showContent]);
 
   // (re)load the sculpture whenever the theme or layout asks for another image;
   // the canvas dips out while the static image covers the swap
   React.useEffect(() => {
-    const root = rootRef.current
-    const engine = engineRef.current
-    if (!root) return
-    let cancelled = false
-    const image = new Image()
-    image.crossOrigin = "anonymous"
-    image.decoding = "async"
-    const swapping = root.dataset.gl === "on"
-    if (swapping) root.dataset.swap = "1"
+    const root = rootRef.current;
+    const engine = engineRef.current;
+    if (!root) return;
+    let cancelled = false;
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.decoding = "async";
+    const swapping = root.dataset.gl === "on";
+    if (swapping) root.dataset.swap = "1";
     image.onload = () => {
-      if (cancelled) return
-      aspectRef.current = image.naturalWidth / image.naturalHeight || aspectRef.current
-      relayout()
+      if (cancelled) return;
+      aspectRef.current =
+        image.naturalWidth / image.naturalHeight || aspectRef.current;
+      relayout();
       if (engine && root.dataset.gl !== "off") {
         try {
           engine.onFirstFrame = () => {
-            if (cancelled) return
-            root.dataset.gl = "on"
-            delete root.dataset.swap
-          }
-          engine.setImage(image)
-          relayout()
+            if (cancelled) return;
+            root.dataset.gl = "on";
+            delete root.dataset.swap;
+          };
+          engine.setImage(image);
+          relayout();
         } catch {
-          root.dataset.gl = "off"
+          root.dataset.gl = "off";
         }
-      } else delete root.dataset.swap
-    }
+      } else delete root.dataset.swap;
+    };
     image.onerror = () => {
-      delete root.dataset.swap
-    }
+      delete root.dataset.swap;
+    };
     // let the fade-out start before the GPU upload
-    const t = window.setTimeout(() => (image.src = activeSrc), swapping ? 280 : 0)
+    const t = window.setTimeout(
+      () => (image.src = activeSrc),
+      swapping ? 280 : 0,
+    );
     return () => {
-      cancelled = true
-      window.clearTimeout(t)
-      image.onload = null
-      image.onerror = null
-    }
-  }, [activeSrc, relayout])
+      cancelled = true;
+      window.clearTimeout(t);
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [activeSrc, relayout]);
 
   // live option updates without re-creating the engine
   React.useEffect(() => {
-    const e = engineRef.current
-    if (!e) return
-    const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    e.setOptions(optsRef.current(rm))
-  }, [interactive, strength, radius, particleDensity, dotSize, particleSpread, turbulence, liquid, streaks, restStyle, returnSpeed, ambient, ambientIntensity, speed, intro, bgRgb, imgBgRgb])
+    const e = engineRef.current;
+    if (!e) return;
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    e.setOptions(optsRef.current(rm));
+  }, [
+    interactive,
+    strength,
+    radius,
+    particleDensity,
+    dotSize,
+    particleSpread,
+    turbulence,
+    liquid,
+    streaks,
+    restStyle,
+    returnSpeed,
+    ambient,
+    ambientIntensity,
+    speed,
+    intro,
+    bgRgb,
+    imgBgRgb,
+  ]);
 
   React.useEffect(() => {
-    relayout()
-  }, [sculptureScale, mobileSculptureScale, sculptureX, sculptureY, relayout])
+    relayout();
+  }, [
+    sculptureScale,
+    mobileSculptureScale,
+    sculptureX,
+    sculptureY,
+    mobileSculptureX,
+    mobileSculptureY,
+    relayout,
+  ]);
 
   const vars = {
     "--sh-bg": background,
@@ -1661,22 +1967,50 @@ export default function SculptureHero(props: SculptureHeroProps) {
     "--sh-accent": accentFont,
     "--sh-body": bodyFont,
     "--sh-h": height,
-  } as React.CSSProperties
+  } as React.CSSProperties;
 
-  const hintText = isTouch ? hintTouch : hint
+  const hintText = isTouch ? hintTouch : hint;
 
   return (
-    <section ref={rootRef} className={"sh-root" + (className ? " " + className : "")} style={{ ...vars, ...style }}>
+    <section
+      ref={rootRef}
+      className={"sh-root" + (className ? " " + className : "")}
+      style={{ ...vars, ...style }}
+    >
       <style>{CSS}</style>
       {backdropText ? (
         <div ref={backdropRef} className="sh-backdrop" aria-hidden="true">
           {backdropText}
         </div>
       ) : null}
-      <div ref={stageRef} className="sh-stage" aria-hidden="true">
-        <img ref={imgRef} className="sh-fallback" src={activeSrc} alt="" crossOrigin="anonymous" draggable={false} />
+      <div
+        ref={stageRef}
+        className="sh-stage"
+        aria-hidden="true"
+        style={{
+          pointerEvents: interactive && !showContent ? "auto" : undefined,
+        }}
+      >
+        <img
+          ref={imgRef}
+          className="sh-fallback"
+          src={activeSrc}
+          alt=""
+          crossOrigin="anonymous"
+          draggable={false}
+        />
       </div>
-      <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{imageAlt}</span>
+      <span
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          overflow: "hidden",
+          clip: "rect(0 0 0 0)",
+        }}
+      >
+        {imageAlt}
+      </span>
 
       {showNav && (
         <nav ref={navRef} className="sh-nav" aria-label="Primary">
@@ -1696,8 +2030,14 @@ export default function SculptureHero(props: SculptureHeroProps) {
                 <button
                   type="button"
                   className="sh-theme"
-                  aria-label={mode === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-                  onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
+                  aria-label={
+                    mode === "dark"
+                      ? "Switch to light theme"
+                      : "Switch to dark theme"
+                  }
+                  onClick={() =>
+                    setMode((m) => (m === "dark" ? "light" : "dark"))
+                  }
                 >
                   {mode === "dark" ? <SunIcon /> : <MoonIcon />}
                 </button>
@@ -1727,7 +2067,9 @@ export default function SculptureHero(props: SculptureHeroProps) {
           <div ref={contentRef} className="sh-content">
             <div>
               {eyebrow ? <p className="sh-eyebrow">{eyebrow}</p> : null}
-              <h1 className="sh-h1">{renderHeadline(headline, headlineAccent)}</h1>
+              <h1 className="sh-h1">
+                {renderHeadline(headline, headlineAccent)}
+              </h1>
             </div>
             <div className="sh-aside">
               {body ? <p className="sh-body">{body}</p> : null}
@@ -1751,10 +2093,15 @@ export default function SculptureHero(props: SculptureHeroProps) {
       )}
 
       {showCredit && (
-        <a className="sh-credit" href="https://guglielmogiannattasio.it" target="_blank" rel="noopener">
+        <a
+          className="sh-credit"
+          href="https://guglielmogiannattasio.it"
+          target="_blank"
+          rel="noopener"
+        >
           by guglielmogiannattasio.it
         </a>
       )}
     </section>
-  )
+  );
 }

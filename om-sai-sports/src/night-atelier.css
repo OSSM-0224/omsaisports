@@ -57,10 +57,101 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{-webkit
 .hero-counter-slash,.hero-counter-total{font-size:.7rem}
 .hero-scroll-cue{font-size:.7rem}
 
-/* The liquid stage fills the hero wall area directly — no design-wall frame,
-   no rotation, no mask. Pointer coordinates stay mapped 1:1 to the canvas. */
+/* The liquid root stays 100% of the hero wall and transparent. The canvas
+   auto-pads around the image so moving it left never crops it; the image still
+   sits behind the hero text. No frame/rotation/mask, so pointers stay mapped 1:1. */
 .hero-wall-wrap>.hero-liquid-sculpture{position:absolute;inset:0;z-index:1;width:100%;height:100%;border:0;border-radius:0;box-shadow:none;background:transparent;overflow:visible;container-type:normal}
 .hero .jersey-number{display:none}
+
+/* ==========================================
+   MOBILE HERO — RESPONSIVE LIQUID SCULPTURE
+   Desktop and tablet remain unchanged.
+========================================== */
+
+@media (max-width: 600px) {
+
+  .hero {
+    min-height: auto;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    padding: 112px 5vw 0;
+    row-gap: 0;
+  }
+
+  .hero-copy {
+    padding: 0;
+    min-width: 0;
+  }
+
+  .hero-stats {
+    margin-top: 26px;
+    margin-bottom: 0;
+  }
+
+  .hero-stats > div {
+    padding-left: 12px;
+    padding-right: 12px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .hero-stats > div:first-child {
+    padding-left: 0;
+  }
+
+  .hero-stats b {
+    font-size: 1.35rem;
+  }
+
+  .hero-stats small {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+  }
+
+  /* Liquid Particle showcase */
+  .hero-wall-wrap {
+    width: 100%;
+    height: clamp(350px, 100vw, 430px);
+    min-height: 0;
+    max-height: none;
+    margin: 0 auto;
+    position: relative;
+    overflow: visible;
+  }
+
+  .hero-wall-wrap > .hero-liquid-sculpture {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .hero-wall-wrap .latest-sticker {
+    right: 0;
+    bottom: 8px;
+  }
+
+}
+
+/* Smaller mobile screens */
+@media (max-width: 380px) {
+
+  .hero {
+    padding-top: 105px;
+  }
+
+  .hero-wall-wrap {
+    height: 350px;
+  }
+
+  .hero-stats {
+    margin-top: 22px;
+  }
+
+}
 
 /* ——— Shared section rhythm ——— */
 .section{padding:clamp(92px,10vw,138px) 7vw}

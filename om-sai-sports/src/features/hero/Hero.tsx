@@ -7,6 +7,23 @@ import type { SiteSettings } from "../../lib/siteSettings";
 
 const counterValues = ["01", "02", "03", "04", "05"];
 
+/* ── Liquid sculpture tweaks ─────────────────────────────────────────
+ * Edit this block only. The `.sh-root` stays 100% of the wall. Desktop and
+ * mobile values are independent; the canvas auto-pads so the image is never
+ * cut. Position values are percentages of the wall (+x right, +y down).
+ *   size / x / y          → desktop (stage width >= 640px)
+ *   mobileSize / mobileX / mobileY → mobile (stage width < 640px)
+ */
+const SCULPTURE_TWEAKS = {
+  size: 1.5,
+  x: -15.25,
+  y: 0,
+
+  mobileSize: 1.5,
+  mobileX: 0,
+  mobileY: 0,
+};
+
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
@@ -157,11 +174,11 @@ export default function Hero() {
           height="100%"
           className="hero-liquid-sculpture"
           interactive
-          strength={1.15}
-          radius={200}
+          strength={5.15}
+          radius={300}
           particleDensity={0.85}
           dotSize={1}
-          particleSpread={1}
+          particleSpread={1.5}
           turbulence={1.1}
           liquid={1.2}
           restStyle="image"
@@ -170,8 +187,12 @@ export default function Hero() {
           speed={0.85}
           intro={false}
           sculptureFit="contain"
-          sculptureScale={1}
-          mobileSculptureScale={1}
+          sculptureX={SCULPTURE_TWEAKS.x}
+          sculptureY={SCULPTURE_TWEAKS.y}
+          sculptureScale={SCULPTURE_TWEAKS.size}
+          mobileSculptureScale={SCULPTURE_TWEAKS.mobileSize}
+          mobileSculptureX={SCULPTURE_TWEAKS.mobileX}
+          mobileSculptureY={SCULPTURE_TWEAKS.mobileY}
         />
         <div className="latest-sticker">LATEST DROP ↓</div>
       </div>
