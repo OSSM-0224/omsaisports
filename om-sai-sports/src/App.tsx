@@ -22,7 +22,7 @@ function Home() {
     getDesigns().then((next) => { if (active) setDesigns(next); }).catch(() => {});
     return () => { active = false; };
   }, []);
-  return <><Navbar /><main><Hero designs={designs} /><Clients /><Gallery designs={designs} /><Story /><Process /><Facts /><Journal designs={designs} /><Contact /></main><Footer /></>;
+  return <><Navbar /><main><Hero /><Clients /><Gallery designs={designs} /><Story /><Process /><Facts /><Journal designs={designs} /><Contact /></main><Footer /></>;
 }
 
 function HashScroll() {

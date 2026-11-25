@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import SculptureHero from "@/components/ui/liquid-sculpture-hero";
 import { HeroBackground } from "./HeroBackground.tsx";
 import { defaultSiteSettings, getSiteSettings } from "../../lib/siteSettings";
 import type { SiteSettings } from "../../lib/siteSettings";
-import type { Design } from "../../types";
 
 const counterValues = ["01", "02", "03", "04", "05"];
 
-export default function Hero({ designs }: { designs: Design[] }) {
-  const wall = designs.slice(0, 12);
-  const wallColumns = [0, 1, 2].map((column) =>
-    wall.filter((_, index) => index % 3 === column),
-  );
+export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [activeCard, setActiveCard] = useState(0);
@@ -151,48 +147,45 @@ export default function Hero({ designs }: { designs: Design[] }) {
           />
           <span className="est-year">EST. 2000</span>
         </div>
-        <div className="design-wall">
-          <div className="wall-column up">
-            {[...wallColumns[0], ...wallColumns[0]].map((d, i) => (
-              <div className="wall-card" key={`a${i}`}>
-                <img
-                  src={d.imageUrl}
-                  alt={d.alt || d.title}
-                  loading={i < 2 ? "eager" : "lazy"}
-                  width="360"
-                  height="480"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="wall-column down">
-            {[...wallColumns[1].slice().reverse(), ...wallColumns[1].slice().reverse()].map(
-              (d, i) => (
-                <div className="wall-card" key={`b${i}`}>
-                  <img
-                    src={d.imageUrl}
-                    alt={d.alt || d.title}
-                    loading="lazy"
-                    width="360"
-                    height="480"
-                  />
-                </div>
-              ),
-            )}
-          </div>
-          <div className="wall-column up slower">
-            {[...wallColumns[2], ...wallColumns[2]].map((d, i) => (
-              <div className="wall-card" key={`c${i}`}>
-                <img
-                  src={d.imageUrl}
-                  alt={d.alt || d.title}
-                  loading="lazy"
-                  width="360"
-                  height="480"
-                />
-              </div>
-            ))}
-          </div>
+        <div className="design-wall liquid-design-wall">
+          <SculptureHero
+            src="/HeroSectionbackgrounImage.png"
+            darkSrc="/HeroSectionbackgrounImage.png"
+            mobileSrc="/HeroSectionbackgrounImage.png"
+            mobileDarkSrc="/HeroSectionbackgrounImage.png"
+            imageAlt="OM SAI SPORTS custom jersey collection in a liquid particle wall"
+            theme="dark"
+            background="#0C0C0D"
+            darkBackground="#0C0C0D"
+            textColor="#F7F1E9"
+            accentColor="#FF5A00"
+            headingFont="'Space Grotesk', 'DM Sans', sans-serif"
+            accentFont="'Space Grotesk', 'DM Sans', sans-serif"
+            bodyFont="'DM Sans', sans-serif"
+            loadFonts={false}
+            showNav={false}
+            showContent={false}
+            showCredit={false}
+            themeToggle={false}
+            backdropText=""
+            height="100%"
+            className="hero-liquid-sculpture"
+            interactive
+            strength={1.15}
+            radius={200}
+            particleDensity={0.85}
+            dotSize={1}
+            particleSpread={1}
+            turbulence={1.1}
+            liquid={1.2}
+            restStyle="image"
+            returnSpeed={1.1}
+            ambient={false}
+            speed={0.85}
+            intro={false}
+            sculptureScale={1.15}
+            mobileSculptureScale={1.2}
+          />
         </div>
         <div className="latest-sticker">LATEST DROP ↓</div>
       </div>
