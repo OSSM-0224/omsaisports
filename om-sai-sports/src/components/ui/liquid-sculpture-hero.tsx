@@ -486,7 +486,7 @@ class LiquidEngine {
 
     this.pFlow = compile(gl, QUAD_VS, FLOW_FS)
     this.pSim = compile(gl, QUAD_VS, SIM_FS)
-    this.pPart = compile(gl, QUAD_VS, PART_VS)
+    this.pPart = compile(gl, PART_VS, PART_FS)
     this.pImg = compile(gl, QUAD_VS, IMAGE_FS)
 
     this.vao = gl.createVertexArray()!
