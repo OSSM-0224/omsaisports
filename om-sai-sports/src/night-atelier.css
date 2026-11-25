@@ -57,6 +57,11 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{-webkit
 .hero-counter-slash,.hero-counter-total{font-size:.7rem}
 .hero-scroll-cue{font-size:.7rem}
 
+/* The sculpture replaces the old three-column jersey wall. Keep the existing
+   wall frame, but let the single interactive stage fill all of it. */
+.hero .design-wall.liquid-design-wall{display:block;grid-template-columns:none;gap:0;padding:0;background:#0C0C0D}
+.liquid-design-wall>.sh-root,.liquid-design-wall>.hero-liquid-sculpture{width:100%;height:100%}
+
 /* ——— Shared section rhythm ——— */
 .section{padding:clamp(92px,10vw,138px) 7vw}
 .section-head{margin-bottom:46px;align-items:flex-end}
