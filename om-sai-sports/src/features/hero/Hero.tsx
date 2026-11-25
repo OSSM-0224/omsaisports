@@ -134,59 +134,45 @@ export default function Hero() {
       </div>
       <div className="hero-wall-wrap">
         <div className="jersey-number">10</div>
-        <div className="est-badge">
-          <div className="badge-ring" aria-hidden="true" />
-          <img
-            className="est-crest"
-            src="/brand/oss-shield.png"
-            width="280"
-            height="349"
-            alt=""
-            aria-hidden="true"
-            draggable="false"
-          />
-          <span className="est-year">EST. 2000</span>
-        </div>
-        <div className="design-wall liquid-design-wall">
-          <SculptureHero
-            src="/HeroSectionbackgrounImage.png"
-            darkSrc="/HeroSectionbackgrounImage.png"
-            mobileSrc="/HeroSectionbackgrounImage.png"
-            mobileDarkSrc="/HeroSectionbackgrounImage.png"
-            imageAlt="OM SAI SPORTS custom jersey collection in a liquid particle wall"
-            theme="dark"
-            background="#0C0C0D"
-            darkBackground="#0C0C0D"
-            textColor="#F7F1E9"
-            accentColor="#FF5A00"
-            headingFont="'Space Grotesk', 'DM Sans', sans-serif"
-            accentFont="'Space Grotesk', 'DM Sans', sans-serif"
-            bodyFont="'DM Sans', sans-serif"
-            loadFonts={false}
-            showNav={false}
-            showContent={false}
-            showCredit={false}
-            themeToggle={false}
-            backdropText=""
-            height="100%"
-            className="hero-liquid-sculpture"
-            interactive
-            strength={1.15}
-            radius={200}
-            particleDensity={0.85}
-            dotSize={1}
-            particleSpread={1}
-            turbulence={1.1}
-            liquid={1.2}
-            restStyle="image"
-            returnSpeed={1.1}
-            ambient={false}
-            speed={0.85}
-            intro={false}
-            sculptureScale={1.15}
-            mobileSculptureScale={1.2}
-          />
-        </div>
+        <SculptureHero
+          src="/HeroSectionbackgrounImage.png"
+          darkSrc="/HeroSectionbackgrounImage.png"
+          mobileSrc="/HeroSectionbackgrounImage.png"
+          mobileDarkSrc="/HeroSectionbackgrounImage.png"
+          imageAlt="OM SAI SPORTS custom jersey collection in a liquid particle wall"
+          theme="dark"
+          background="#0C0C0D"
+          darkBackground="#0C0C0D"
+          textColor="#F7F1E9"
+          accentColor="#FF5A00"
+          headingFont="'Space Grotesk', 'DM Sans', sans-serif"
+          accentFont="'Space Grotesk', 'DM Sans', sans-serif"
+          bodyFont="'DM Sans', sans-serif"
+          loadFonts={false}
+          showNav={false}
+          showContent={false}
+          showCredit={false}
+          themeToggle={false}
+          backdropText=""
+          height="100%"
+          className="hero-liquid-sculpture"
+          interactive
+          strength={1.15}
+          radius={200}
+          particleDensity={0.85}
+          dotSize={1}
+          particleSpread={1}
+          turbulence={1.1}
+          liquid={1.2}
+          restStyle="image"
+          returnSpeed={1.1}
+          ambient={false}
+          speed={0.85}
+          intro={false}
+          sculptureFit="contain"
+          sculptureScale={1}
+          mobileSculptureScale={1}
+        />
         <div className="latest-sticker">LATEST DROP ↓</div>
       </div>
       <div className="hero-counter" aria-hidden="true">

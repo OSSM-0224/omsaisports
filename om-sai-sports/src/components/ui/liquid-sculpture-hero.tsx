@@ -1066,6 +1066,8 @@ export interface SculptureHeroProps {
   /** 1 = default size for the breakpoint. */
   sculptureScale?: number
   mobileSculptureScale?: number
+  /** "bleed" lets the sculpture overflow its box; "contain" keeps it fully visible. */
+  sculptureFit?: "bleed" | "contain"
   /** Offset in % of the hero width / height. */
   sculptureX?: number
   sculptureY?: number
@@ -1153,9 +1155,21 @@ function computeRect(
   h: number,
   aspect: number,
   band: { top: number; bottom: number },
-  p: { scale: number; mobileScale: number; x: number; y: number }
+  p: { scale: number; mobileScale: number; x: number; y: number },
+  fit: "bleed" | "contain"
 ): Rect {
   const bandH = Math.max(80, band.bottom - band.top)
+  const cx = w * (0.5 + p.x / 100)
+  const cy = (band.top + band.bottom) / 2 + h * (p.y / 100)
+
+  if (fit === "contain") {
+    // Never crop the sculpture: fit it inside the available band with a small margin.
+    const s = Math.min(1, w < 640 ? p.mobileScale : p.scale)
+    const rw = Math.min(w * 0.98, bandH * 0.98 * aspect) * s
+    const rh = rw / aspect
+    return { x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh }
+  }
+
   let rw: number
   let maxH: number
   if (w >= 1024) {
@@ -1174,8 +1188,6 @@ function computeRect(
   }
   if (rw / aspect > maxH) rw = maxH * aspect
   const rh = rw / aspect
-  const cx = w * (0.5 + p.x / 100)
-  const cy = (band.top + band.bottom) / 2 + h * (p.y / 100)
   return { x: cx - rw / 2, y: cy - rh / 2, w: rw, h: rh }
 }
 
@@ -1358,6 +1370,7 @@ export default function SculptureHero(props: SculptureHeroProps) {
     loadFonts = true,
     sculptureScale = 1,
     mobileSculptureScale = 1,
+    sculptureFit = "bleed",
     sculptureX = 0,
     sculptureY = 0,
     interactive = true,
@@ -1401,6 +1414,8 @@ export default function SculptureHero(props: SculptureHeroProps) {
     x: sculptureX,
     y: sculptureY,
   }
+  const fitRef = React.useRef(sculptureFit)
+  fitRef.current = sculptureFit
 
   const [mode, setMode] = React.useState<"light" | "dark">(theme)
   React.useEffect(() => setMode(theme), [theme])
@@ -1468,7 +1483,7 @@ export default function SculptureHero(props: SculptureHeroProps) {
     }
     // a portrait sculpture on phones dissolves into the top of the copy
     if (mob && aspectRef.current < 1.3 && content) band.bottom += content.offsetHeight * 0.3
-    const rect = computeRect(w, h, aspectRef.current, band, layout.current)
+    const rect = computeRect(w, h, aspectRef.current, band, layout.current, fitRef.current)
     const bd = backdropRef.current
     if (bd) {
       const chars = Math.max(1, (bd.textContent || "").length)
