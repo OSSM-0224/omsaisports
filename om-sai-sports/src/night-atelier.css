@@ -42,7 +42,7 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{-webkit
 .menu-preview-cta{color:var(--ink)}
 .menu-meta,.menu-eyebrow,.menu-item-num,.menu-preview-tag,.menu-preview-cta,.menu-foot,.menu-foot a{font-size:.7rem}
 .menu-meta,.menu-eyebrow{color:#b5ada4}
-.menu-shell::after{display:none}
+.menu-shell::after{display:none;background-image:none}
 
 /* ——— Hero details ——— */
 .hero-marquee{background:var(--accent);color:var(--accent-ink)}
@@ -162,7 +162,7 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{-webkit
 .contact-form input,.contact-form textarea{color:var(--ink);border-bottom-color:rgba(247,241,233,.24)}
 .contact-form input::placeholder,.contact-form textarea::placeholder{color:#8f8880}
 .contact-form input:focus,.contact-form textarea:focus{border-color:var(--accent)}
-.contact-form small{color:#8f8880;font-size:.7rem;letter-spacing:.02em;line-height:1.5}
+.contact-form small{color:#8f8880;font-size:.75rem;letter-spacing:.02em;line-height:1.5}
 .contact-form .button{align-self:flex-start;margin-top:4px}
 
 /* ——— Footer ——— */
