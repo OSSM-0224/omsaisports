@@ -8,14 +8,10 @@ import type { Design } from "../../types";
 const counterValues = ["01", "02", "03", "04", "05"];
 
 export default function Hero({ designs }: { designs: Design[] }) {
-  const wall = [
-    designs[0],
-    designs[1],
-    designs[2],
-    designs[3],
-    designs[4],
-    designs[5],
-  ].filter(Boolean);
+  const wall = designs.slice(0, 12);
+  const wallColumns = [0, 1, 2].map((column) =>
+    wall.filter((_, index) => index % 3 === column),
+  );
   const heroRef = useRef<HTMLElement>(null);
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [activeCard, setActiveCard] = useState(0);
@@ -94,9 +90,6 @@ export default function Hero({ designs }: { designs: Design[] }) {
     >
       <HeroBackground settings={settings} appearance="dark" />
       <div className="hero-copy">
-        <div className="eyebrow-chip">
-          <i /> New designs added weekly
-        </div>
         <h1>
           <span>WE DRESS</span>
           <span>THE TEAM</span>
@@ -146,9 +139,7 @@ export default function Hero({ designs }: { designs: Design[] }) {
       <div className="hero-wall-wrap">
         <div className="jersey-number">10</div>
         <div className="est-badge">
-          <div className="badge-ring">
-            EST. 2000 • OM SAI SPORTS • JERSEY MAKERS •
-          </div>
+          <div className="badge-ring" aria-hidden="true" />
           <img
             className="est-crest"
             src="/brand/oss-shield.png"
@@ -158,10 +149,11 @@ export default function Hero({ designs }: { designs: Design[] }) {
             aria-hidden="true"
             draggable="false"
           />
+          <span className="est-year">EST. 2000</span>
         </div>
         <div className="design-wall">
           <div className="wall-column up">
-            {[...wall, ...wall].map((d, i) => (
+            {[...wallColumns[0], ...wallColumns[0]].map((d, i) => (
               <div className="wall-card" key={`a${i}`}>
                 <img
                   src={d.imageUrl}
@@ -170,12 +162,11 @@ export default function Hero({ designs }: { designs: Design[] }) {
                   width="360"
                   height="480"
                 />
-                <span>{d.id}</span>
               </div>
             ))}
           </div>
           <div className="wall-column down">
-            {[...wall.slice().reverse(), ...wall.slice().reverse()].map(
+            {[...wallColumns[1].slice().reverse(), ...wallColumns[1].slice().reverse()].map(
               (d, i) => (
                 <div className="wall-card" key={`b${i}`}>
                   <img
@@ -185,13 +176,12 @@ export default function Hero({ designs }: { designs: Design[] }) {
                     width="360"
                     height="480"
                   />
-                  <span>{d.id}</span>
                 </div>
               ),
             )}
           </div>
           <div className="wall-column up slower">
-            {[...wall.slice(1), ...wall.slice(1)].map((d, i) => (
+            {[...wallColumns[2], ...wallColumns[2]].map((d, i) => (
               <div className="wall-card" key={`c${i}`}>
                 <img
                   src={d.imageUrl}
@@ -200,7 +190,6 @@ export default function Hero({ designs }: { designs: Design[] }) {
                   width="360"
                   height="480"
                 />
-                <span>{d.id}</span>
               </div>
             ))}
           </div>

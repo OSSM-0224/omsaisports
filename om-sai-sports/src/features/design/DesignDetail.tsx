@@ -45,7 +45,6 @@ export default function DesignDetail() {
         <Navbar />
         <main className="design-detail-page">
           <div className="design-detail-missing">
-            <span className="eyebrow">DESIGN NOT FOUND</span>
             <h1>That one isn’t<br /><em>on the wall.</em></h1>
             <p>The design may have been removed, or the link could be incorrect.</p>
             <a className="button button-orange" href="/#designs"><ArrowLeft size={16} /> Back to the archive</a>
@@ -84,7 +83,6 @@ export default function DesignDetail() {
             <span className="design-detail-tag">{design.category} / {design.id}</span>
           </div>
           <div className="design-detail-copy">
-            <span className="eyebrow">CUSTOM TEAMWEAR / {design.category.toUpperCase()}</span>
             <h1>{design.title}</h1>
             <p>{design.description || "A custom teamwear concept made for movement, identity and the moments that bring a team together."}</p>
             <dl className="design-detail-meta">

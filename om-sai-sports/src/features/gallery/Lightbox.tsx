@@ -11,7 +11,7 @@ export default function Lightbox({designs,index,onClose,onMove}:{designs:Design[
   <button className="lightbox-arrow prev" onClick={e=>{e.stopPropagation();onMove((index!-1+designs.length)%designs.length)}} aria-label="Previous" data-cursor="PREVIOUS"><ChevronLeft/></button>
   <motion.div className="lightbox-content" initial={{y:20,scale:.98}} animate={{y:0,scale:1}} onClick={e=>e.stopPropagation()}>
    <img src={d.imageUrl} alt={d.alt||d.title}/>
-   <div className="lightbox-info"><span className="eyebrow">{d.category} / {d.id}</span><h2>{d.title}</h2><p>{d.description}</p>
+   <div className="lightbox-info"><span className="lightbox-meta">{d.category} / {d.id}</span><h2>{d.title}</h2><p>{d.description}</p>
     <div className="lightbox-actions"><a className="button button-orange" data-cursor="ENQUIRE" href={wa} target="_blank" rel="noreferrer">I like this design <ExternalLink size={16}/></a><button className="button button-outline" data-cursor="COPY LINK" onClick={()=>navigator.clipboard.writeText(`${location.origin}/design/${d.id}`).catch(()=>{})}><Copy size={15}/> Copy link</button></div>
    </div>
   </motion.div>
