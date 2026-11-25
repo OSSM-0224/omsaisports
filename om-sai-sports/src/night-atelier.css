@@ -106,7 +106,7 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{-webkit
 .story-number{color:transparent;-webkit-text-stroke:1.5px rgba(255,90,0,.78);letter-spacing:-.1em;opacity:.9}
 .story-copy h2{margin-top:0}
 .story-copy p{color:#b2aaa1}
-.signature{color:var(--ink)}
+.signature{color:var(--ink);margin-top:14px}
 .timeline{color:#8f8880;letter-spacing:.12em}
 .timeline i{background:var(--accent)}
 .story-photo{position:relative;margin:0;height:490px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#181513}
@@ -264,8 +264,8 @@ input:-webkit-autofill,textarea:-webkit-autofill,select:-webkit-autofill{-webkit
   .client-marquee span{font-size:.82rem;padding:10px 15px}
   .design-grid{gap:30px 12px}
   .design-image,.design-card.tall .design-image{height:214px}
-  .design-caption{display:block;position:relative;padding-right:40px}
-  .design-caption button{position:absolute;right:0;top:12px}
+  .design-caption{display:block;position:relative;padding-right:0}
+  .design-caption button{display:none}
   .design-caption h3{font-size:.95rem}
   .est-badge{width:84px;height:84px;top:-24px;left:-14px}
   .est-crest{width:30px;height:30px;padding:3px}
