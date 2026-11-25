@@ -1103,8 +1103,6 @@ export interface SculptureHeroProps {
   height?: string
   /** Giant faint word behind the sculpture. Empty to hide. */
   backdropText?: string
-  /** Render the sculpture without the copy/content block. */
-  showContent?: boolean
   showCredit?: boolean
   className?: string
   style?: React.CSSProperties
@@ -1377,7 +1375,6 @@ export default function SculptureHero(props: SculptureHeroProps) {
     intro = false,
     height = "100svh",
     backdropText = "forma",
-    showContent = true,
     showCredit = true,
     className,
     style,
