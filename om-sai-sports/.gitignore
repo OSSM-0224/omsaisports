@@ -17,6 +17,11 @@ dist-ssr/
 .DS_Store
 Thumbs.db
 
+# Blender source caches and duplicate model exports.
+# The site only needs the runtime GLB in public/models/.
+assets/model/
+*.abc
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

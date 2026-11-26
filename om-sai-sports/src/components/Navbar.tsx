@@ -8,14 +8,30 @@ const whatsappUrl = `https://wa.me/${whatsappNumber}`;
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || "hello@omsaisports.com";
 const contactPhone = import.meta.env.VITE_CONTACT_PHONE || "+91 XXXXX XXXXX";
 
-const pillLinks = [
+type PillLink = { label: string; hash?: string; href?: string };
+
+const pillLinks: PillLink[] = [
   { label: "Designs", hash: "#designs" },
+  { label: "Categories", href: "/designs#ds-categories" },
   { label: "Story", hash: "#story" },
   { label: "Clients", hash: "#clients" },
   { label: "Contact", hash: "#contact" }
 ];
 
-const menuItems = [
+type MenuItem = {
+  label: string;
+  hash?: string;
+  href?: string;
+  number: string;
+  tag: string;
+  title: string;
+  copy: string;
+  color: string;
+  image: string;
+  alt: string;
+};
+
+const menuItems: MenuItem[] = [
   {
     label: "Designs",
     hash: "#designs",
@@ -28,42 +44,53 @@ const menuItems = [
     alt: "Custom teamwear design from the OM SAI SPORTS archive"
   },
   {
+    label: "Categories",
+    href: "/designs#ds-categories",
+    number: "02",
+    tag: "BY DESIGN TYPE",
+    title: "Find your lane.",
+    copy: "Sports, festival or commercial — browse the archive in clean category rails and open any jersey in the 3D studio.",
+    color: "#D8F26A",
+    image: "/designs/festival/ganpati1-thumb.webp",
+    alt: "Festival jersey design from the OM SAI SPORTS archive"
+  },
+  {
     label: "Story",
     hash: "#story",
-    number: "02",
+    number: "03",
     tag: "SINCE 2000",
     title: "One machine. One dream.",
     copy: "Twenty-five years of making jerseys with a story — from a single machine to teams across the Navi Mumbai region.",
-    color: "#D8F26A",
+    color: "#A9C7FF",
     image: "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=900&q=80",
     alt: "Sports team gathered on the field"
   },
   {
     label: "Clients",
     hash: "#clients",
-    number: "03",
+    number: "04",
     tag: "GOOD COMPANY",
     title: "Trusted by big spirit.",
     copy: "Schools, colleges and clubs who trust us with their colours, their crests and their biggest match days.",
-    color: "#A9C7FF",
+    color: "#F5B8C8",
     image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=900&q=80",
     alt: "Cricket stadium under floodlights"
   },
   {
     label: "Journal",
     hash: "#journal",
-    number: "04",
+    number: "05",
     tag: "THE WORKSHOP",
     title: "Fresh off the press.",
     copy: "New drops, work in progress and small notes from the workshop floor. See what we have been making lately.",
-    color: "#F5B8C8",
+    color: "#FFB37A",
     image: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=900&q=80",
     alt: "Sports equipment and training detail"
   },
   {
     label: "Contact",
     hash: "#contact",
-    number: "05",
+    number: "06",
     tag: "START HERE",
     title: "Let’s make yours.",
     copy: "Tell us about your team. Share a colour, a crest or a rough idea and we’ll take it from there.",
@@ -241,9 +268,14 @@ export default function Navbar() {
                 className="pill-link"
                 data-text={link.label}
                 data-cursor={link.label.toUpperCase()}
-                href={isHome ? link.hash : `/${link.hash}`}
-                aria-current={activeSection === link.hash.slice(1) ? "location" : undefined}
+                href={link.href ?? (isHome ? link.hash : `/${link.hash}`)}
+                aria-current={
+                  link.href
+                    ? pathname === link.href.split("#")[0] ? "page" : undefined
+                    : activeSection === link.hash?.slice(1) ? "location" : undefined
+                }
                 onClick={(event) => {
+                  if (!link.hash) return;
                   if (!isHome) return;
                   event.preventDefault();
                   navigateTo(link.hash);
@@ -324,22 +356,31 @@ export default function Navbar() {
 
           <div className="menu-body">
             <div className="menu-index">
-              <span className="menu-eyebrow">INDEX / 01—05</span>
+              <span className="menu-eyebrow">INDEX / 01—06</span>
               <nav className="menu-list" aria-label="Site sections">
                 {menuItems.map((item, index) => (
                   <a
                     key={item.label}
                     ref={(node) => { menuLinkRefs.current[index] = node; }}
                     className="menu-item"
-                    href={isHome ? item.hash : `/${item.hash}`}
+                    href={item.href ?? (isHome ? item.hash : `/${item.hash}`)}
                     data-cursor="GO TO"
                     style={{ "--item-color": item.color, "--item-index": index } as CSSProperties}
-                    aria-current={activeSection === item.hash.slice(1) ? "location" : undefined}
+                    aria-current={
+                      item.href
+                        ? pathname === item.href.split("#")[0] ? "page" : undefined
+                        : activeSection === item.hash?.slice(1) ? "location" : undefined
+                    }
                     onMouseEnter={() => setActiveIndex(index)}
                     onFocus={() => setActiveIndex(index)}
                     onClick={(event) => {
                       event.preventDefault();
-                      navigateTo(item.hash);
+                      if (item.href) {
+                        const target = item.href;
+                        closeMenu(() => window.location.assign(target));
+                        return;
+                      }
+                      if (item.hash) navigateTo(item.hash);
                     }}
                   >
                     <span className="menu-item-num">{item.number}</span>

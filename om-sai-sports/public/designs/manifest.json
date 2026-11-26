@@ -1,0 +1,49 @@
+{
+  "designs": [
+    {
+      "id": "yash24-player",
+      "title": "YASH 24 — Player Edition",
+      "category": "sports",
+      "accent": "#ff5a24",
+      "silhouette": "athletic",
+      "image": "/designs/sports/yash24-player.webp",
+      "thumb": "/designs/sports/yash24-player-thumb.webp"
+    },
+    {
+      "id": "festival-chevron",
+      "title": "Festival Chevron",
+      "category": "festival",
+      "accent": "#7c5cff",
+      "silhouette": "oversized",
+      "image": "/designs/festival/festival-chevron.webp",
+      "thumb": "/designs/festival/festival-chevron-thumb.webp"
+    },
+    {
+      "id": "slhs-crest",
+      "title": "SLHS 24 — Xavier Edition",
+      "category": "sports",
+      "accent": "#8d2438",
+      "silhouette": "polo",
+      "image": "/designs/sports/slhs-crest.webp",
+      "thumb": "/designs/sports/slhs-crest-thumb.webp"
+    },
+    {
+      "id": "ganpati1",
+      "title": "Ganpati — Festival Edition",
+      "category": "festival",
+      "accent": "#ff9f1c",
+      "silhouette": "oversized",
+      "image": "/designs/festival/ganpati1.webp",
+      "thumb": "/designs/festival/ganpati1-thumb.webp"
+    },
+    {
+      "id": "devi1",
+      "title": "Devi — Festival Edition",
+      "category": "festival",
+      "accent": "#e0476b",
+      "silhouette": "oversized",
+      "image": "/designs/festival/devi1.webp",
+      "thumb": "/designs/festival/devi1-thumb.webp"
+    }
+  ]
+}
