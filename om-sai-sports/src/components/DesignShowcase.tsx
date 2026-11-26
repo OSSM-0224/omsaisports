@@ -60,20 +60,23 @@ const STUDIO_NOTES = [
   {
     id: "note-1",
     key: "sports",
-    title: "One mesh, every print.",
-    copy: "The GLB stays mounted. Selecting a kit swaps only the fabric texture — no reload, no second model.",
+    label: "LIVE SWAP",
+    title: "One fit, every design.",
+    copy: "Pick any artwork. The same jersey stays on screen while its print and sleeve colour change instantly — no reload, no second model.",
   },
   {
     id: "note-2",
     key: "festival",
-    title: "Sleeve reads the manifest.",
-    copy: "Each design carries its own accent. That single hex drives the sleeve trim and the archive marker.",
+    label: "SLEEVE ACCENT",
+    title: "Sleeves follow the design.",
+    copy: "Every kit carries its own accent. That one colour updates the sleeve trim and the archive marker.",
   },
   {
     id: "note-3",
     key: "commercial",
+    label: "COLLAR LOCK",
     title: "Collar stays locked.",
-    copy: "One code in settings.json governs collar and placket on every kit in the archive.",
+    copy: "One code in settings.json controls the collar and placket on every kit. Edit it once and the whole archive follows.",
   },
 ] as const;
 
@@ -350,9 +353,6 @@ export default function DesignShowcase() {
     if (direction === "down") spin.current.pitch = clamp(spin.current.pitch + step * 0.5, -0.28, 0.28);
   };
 
-  const note = STUDIO_NOTES[activeNote];
-  const noteThumb = designs.find((item) => item.category === note.key)?.thumb;
-
   return (
     <div className="ds-site" ref={siteRef}>
       <header className="site-head ds-head">
@@ -567,15 +567,25 @@ export default function DesignShowcase() {
           <div className="ds-notes-stage">
             {STUDIO_NOTES.map((item, index) => {
               const thumb = designs.find((design) => design.category === item.key)?.thumb;
+              const swapA = designs.find((design) => design.category === "sports")?.thumb;
+              const swapB = designs.find((design) => design.category === "festival")?.thumb;
               return (
                 <article
                   className={`ds-note-card ${activeNote === index ? "is-active" : ""}`}
                   key={item.id}
                   style={{ "--stack-i": index } as CSSProperties}
                 >
-                  {thumb && <img src={thumb} alt="" loading="lazy" draggable="false" />}
+                  {item.id === "note-1" && swapA && swapB ? (
+                    <span className="ds-note-swap" aria-hidden="true">
+                      <img src={swapA} alt="" loading="lazy" draggable="false" />
+                      <span className="ds-note-swap-icon"><ArrowRight size={14} strokeWidth={1.8} /></span>
+                      <img src={swapB} alt="" loading="lazy" draggable="false" />
+                    </span>
+                  ) : thumb ? (
+                    <img src={thumb} alt="" loading="lazy" draggable="false" />
+                  ) : null}
                   <div>
-                    <span className="ds-note-key">NOTE / {item.key.toUpperCase()}</span>
+                    <span className="ds-note-key">{item.label}</span>
                     <h3>{item.title}</h3>
                     <p>{item.copy}</p>
                   </div>
