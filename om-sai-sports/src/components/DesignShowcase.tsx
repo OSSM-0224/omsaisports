@@ -212,6 +212,21 @@ export default function DesignShowcase() {
       });
 
       gsap.fromTo(
+        ".ds-archive-pin-inner",
+        { y: 150 },
+        {
+          y: 0,
+          ease: "none",
+          scrollTrigger: {
+            trigger: ".ds-archive",
+            start: "top 78%",
+            end: "top -16%",
+            scrub: 0.6,
+          },
+        },
+      );
+
+      gsap.fromTo(
         ".ds-manifesto-word",
         { opacity: 0.14, yPercent: 14 },
         {
@@ -582,28 +597,30 @@ export default function DesignShowcase() {
         <section className="ds-archive" id="ds-archive">
           <div className="ds-archive-grid">
             <div className="ds-archive-pin" ref={archivePinRef}>
-              <h2>Pick a <em>design.</em></h2>
-              <p className="ds-archive-lede">
-                Click any artwork to load it on the jersey above. No reload, no second model —
-                the archive is split into category rails.
-              </p>
-              <div className="ds-filters" role="group" aria-label="Filter designs by category">
-                {FILTERS.map((filter) => (
-                  <button
-                    type="button"
-                    key={filter}
-                    className={`filter${category === filter ? " active" : ""}`}
-                    data-text={filter.toUpperCase()}
-                    aria-pressed={category === filter}
-                    onClick={() => setCategory(filter)}
-                  >
-                    <span>{filter.toUpperCase()}</span>
-                  </button>
-                ))}
+              <div className="ds-archive-pin-inner">
+                <h2>Pick a <em>design.</em></h2>
+                <p className="ds-archive-lede">
+                  Click any artwork to load it on the jersey above. No reload, no second model —
+                  the archive is split into category rails.
+                </p>
+                <div className="ds-filters" role="group" aria-label="Filter designs by category">
+                  {FILTERS.map((filter) => (
+                    <button
+                      type="button"
+                      key={filter}
+                      className={`filter${category === filter ? " active" : ""}`}
+                      data-text={filter.toUpperCase()}
+                      aria-pressed={category === filter}
+                      onClick={() => setCategory(filter)}
+                    >
+                      <span>{filter.toUpperCase()}</span>
+                    </button>
+                  ))}
+                </div>
+                <span className="ds-archive-total">
+                  {String(filtered.length).padStart(3, "0")} DESIGNS IN VIEW
+                </span>
               </div>
-              <span className="ds-archive-total">
-                {String(filtered.length).padStart(3, "0")} DESIGNS IN VIEW
-              </span>
             </div>
 
             <div className="ds-archive-rail" ref={archiveScrollRef}>
@@ -664,12 +681,17 @@ export default function DesignShowcase() {
                             >
                               <span className="ds-card-media">
                                 <img src={design.thumb} alt={design.title} loading="lazy" />
-                                <span className="ds-card-index">{String(index + 1).padStart(2, "0")}</span>
+                                <span className="ds-card-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                                {selected?.id === design.id && <span className="ds-card-state">ON STAGE</span>}
                                 <span className="ds-card-arrow" aria-hidden="true"><ArrowUpRight size={17} strokeWidth={1.7} /></span>
                               </span>
                               <span className="ds-card-info">
                                 <small>{design.category} / {design.id}</small>
                                 <strong>{design.title}</strong>
+                                <span className="ds-card-foot">
+                                  <i style={{ background: design.accent }} aria-hidden="true" />
+                                  {design.accent.toUpperCase()}
+                                </span>
                               </span>
                               <span className="ds-card-accent" style={{ background: design.accent }} aria-hidden="true" />
                             </button>
