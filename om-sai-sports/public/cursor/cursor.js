@@ -108,8 +108,7 @@
         target + (current - target) * Math.exp(-lambda * dt);
     const easeInOutCubic = (t) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    const canUse = () =>
-        finePointer.matches && !reducedMotion.matches && !state.suppressed;
+    const canUse = () => false;
 
     function sizeThreadCanvas() {
         if (!threadCanvas || !threadCtx) return;
