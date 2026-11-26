@@ -1,23 +1,9 @@
 import type {
   ClientItem,
-  DesignCategory,
   FactItem,
   JerseyDesign,
-  ProcessStep,
   SiteSettings,
 } from "../types/index";
-
-export const DESIGN_CATEGORIES: ("All" | DesignCategory)[] = [
-  "All",
-  "School",
-  "College",
-  "Club",
-  "Cricket",
-  "Football",
-  "Kabaddi",
-  "Running",
-  "Custom",
-];
 
 export const HERO_DEFAULT_POSTER =
   "/src/assets/images/hero_silk_poster_1795103995085.jpg";
@@ -29,9 +15,6 @@ export const SEED_SITE_SETTINGS: SiteSettings = {
   heroPosterUrl: HERO_DEFAULT_POSTER,
   heroUseVideo: false,
 };
-
-export const FOUNDER_IMAGE =
-  "/src/assets/images/founder_yashwant_mhatre_1795098247715.jpg";
 
 export const SEED_DESIGNS: JerseyDesign[] = [
   {
@@ -266,45 +249,6 @@ export const SEED_CLIENTS: ClientItem[] = [
   { id: "c19", name: "Indo Scot", since: "2019" },
   { id: "c20", name: "St Mary Convent", since: "2005" },
   { id: "c21", name: "Higher School Alibaug", since: "2002" },
-];
-
-export const PROCESS_STEPS: ProcessStep[] = [
-  {
-    step: "01",
-    title: "Design",
-    caption:
-      "We sketch team colours, crests, collars, and squad numbers until the kit feels unmistakably yours.",
-    imageUrl: "/src/assets/images/jersey_tournament_obsidian_1795098247187.jpg",
-    imageAlt:
-      "Custom sublimated black and orange jersey layout prepared during design proofing",
-  },
-  {
-    step: "02",
-    title: "Sublimation printing",
-    caption:
-      "Deep-dye heat transfer locks crisp colours straight into the fabric fibres—never peeling, never fading.",
-    imageUrl: "/src/assets/images/process_sublimation_press_1795098247132.jpg",
-    imageAlt:
-      "Large format sublimation heat press transferring orange and black graphics onto jersey fabric",
-  },
-  {
-    step: "03",
-    title: "Stitching",
-    caption:
-      "Every panel is cut and joined on flatlock and overlock machines by tailors who know how athletes move.",
-    imageUrl: "/src/assets/images/process_stitching_craft_1795098247783.jpg",
-    imageAlt:
-      "Artisan hands stitching orange and black breathable athletic mesh on an industrial sewing machine",
-  },
-  {
-    step: "04",
-    title: "Quality check & delivery",
-    caption:
-      "Each jersey is checked by hand for seam strength, squad number accuracy, and neat folded dispatch.",
-    imageUrl: "/src/assets/images/jersey_school_navy_1795098247544.jpg",
-    imageAlt:
-      "Finished navy and orange school sports jersey folded and inspected before team delivery",
-  },
 ];
 
 export const SEED_FACTS: FactItem[] = [
