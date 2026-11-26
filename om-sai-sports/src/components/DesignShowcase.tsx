@@ -10,6 +10,10 @@ import {
 } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer } from "@react-three/drei";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ArrowLeft, ArrowRight, ArrowUpRight, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import TemplateJersey from "./TemplateJersey";
 import { getDesigns, type DesignCategory, type JerseyDesign } from "../lib/designs";
@@ -18,45 +22,66 @@ import { preloadDesignTextures, pruneDesignTextures } from "../lib/designTexture
 import { clamp, createSpinState } from "../lib/spin";
 import "../design-showcase.css";
 
+gsap.registerPlugin(useGSAP, ScrollTrigger);
+
 const FILTERS: Array<"all" | DesignCategory> = ["all", "sports", "festival", "commercial"];
 
 const CATEGORY_META: Array<{
   key: DesignCategory;
   label: string;
-  index: string;
-  kicker: string;
+  code: string;
   copy: string;
   accent: string;
 }> = [
   {
     key: "sports",
     label: "Sports",
-    index: "01",
-    kicker: "Team colours / match day",
+    code: "SP",
     copy: "Player editions, school crests and club kits built around your colours and your game.",
     accent: "#ff5a00",
   },
   {
     key: "festival",
     label: "Festival",
-    index: "02",
-    kicker: "Festive prints / heritage",
+    code: "FE",
     copy: "Celebration editions with devotional and cultural artwork on the same single GLB.",
     accent: "#ff9f1c",
   },
   {
     key: "commercial",
     label: "Commercial",
-    index: "03",
-    kicker: "Club & brand / custom",
+    code: "CO",
     copy: "Sponsor-led and brand-led kits. This rail is ready for the next commercial drop.",
     accent: "#a9c7ff",
   },
 ];
 
+const STUDIO_NOTES = [
+  {
+    id: "note-1",
+    key: "sports",
+    title: "One mesh, every print.",
+    copy: "The GLB stays mounted. Selecting a kit swaps only the fabric texture — no reload, no second model.",
+  },
+  {
+    id: "note-2",
+    key: "festival",
+    title: "Sleeve reads the manifest.",
+    copy: "Each design carries its own accent. That single hex drives the sleeve trim and the archive marker.",
+  },
+  {
+    id: "note-3",
+    key: "commercial",
+    title: "Collar stays locked.",
+    copy: "One code in settings.json governs collar and placket on every kit in the archive.",
+  },
+] as const;
+
+const MANIFESTO = "The print changes. The hands behind it do not.";
+
 function SpinIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path d="M13.2 8A5.2 5.2 0 1 1 8 2.8c1.7 0 3.2.8 4.2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
       <path d="M12.6 2.2v3.2H9.4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -91,10 +116,14 @@ export default function DesignShowcase() {
   const [autoRotate, setAutoRotate] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [collarColor, setCollarColor] = useState(DEFAULT_COLLAR_COLOR);
+  const [activeNote, setActiveNote] = useState(0);
 
+  const siteRef = useRef<HTMLDivElement>(null);
   const spin = useRef(createSpinState(0.35));
   const intro = useRef(0);
   const stageRef = useRef<HTMLDivElement>(null);
+  const archivePinRef = useRef<HTMLDivElement>(null);
+  const archiveScrollRef = useRef<HTMLDivElement>(null);
   const lastPointer = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -160,10 +189,69 @@ export default function DesignShowcase() {
     pruneDesignTextures(urls);
   }, [selected, selectedIndex, designs]);
 
+  useGSAP(
+    () => {
+      if (reducedMotion) return;
+      const mm = gsap.matchMedia();
+
+      mm.add("(min-width: 1100px)", () => {
+        const pin = archivePinRef.current;
+        const rail = archiveScrollRef.current;
+        if (!pin || !rail) return;
+        gsap.set(pin, { y: 0 });
+        ScrollTrigger.create({
+          trigger: rail,
+          start: "top 120px",
+          end: "bottom bottom",
+          pin,
+          pinSpacing: false,
+          pinType: "fixed",
+          invalidateOnRefresh: true,
+          onUpdate: () => gsap.set(pin, { y: 0 }),
+        });
+      });
+
+      gsap.fromTo(
+        ".ds-manifesto-word",
+        { opacity: 0.14, yPercent: 14 },
+        {
+          opacity: 1,
+          yPercent: 0,
+          stagger: 0.08,
+          ease: "none",
+          scrollTrigger: {
+            trigger: ".ds-manifesto",
+            start: "top 84%",
+            end: "bottom 52%",
+            scrub: 0.5,
+          },
+        },
+      );
+
+      gsap.fromTo(
+        ".ds-note-card",
+        { "--card-shift": 120 },
+        {
+          "--card-shift": 0,
+          stagger: 0.14,
+          ease: "none",
+          scrollTrigger: {
+            trigger: ".ds-notes",
+            start: "top 82%",
+            end: "bottom 62%",
+            scrub: 0.6,
+          },
+        },
+      );
+
+      return () => mm.revert();
+    },
+    { scope: siteRef, dependencies: [reducedMotion, designs.length] },
+  );
+
   const handleLoaded = useCallback(() => setLoaded(true), []);
 
   const selectDesign = useCallback((id: string) => {
-    // Texture swap, not a reload: keep the viewer mounted and the intro state.
     setSelectedId(id);
   }, []);
 
@@ -247,8 +335,11 @@ export default function DesignShowcase() {
     if (direction === "down") spin.current.pitch = clamp(spin.current.pitch + step * 0.5, -0.28, 0.28);
   };
 
+  const note = STUDIO_NOTES[activeNote];
+  const noteThumb = designs.find((item) => item.category === note.key)?.thumb;
+
   return (
-    <div className="ds-site">
+    <div className="ds-site" ref={siteRef}>
       <header className="site-head ds-head">
         <div className="glass-pill">
           <a className="brand-lockup" href="/" aria-label="OM SAI SPORTS — back to home">
@@ -283,17 +374,17 @@ export default function DesignShowcase() {
 
       <main className="ds-main">
         <section className="ds-hero" id="ds-studio">
-          <div className="ds-copy">
-            <p className="eyebrow ds-eyebrow">Digital fitting studio / 01</p>
+          <div className="ds-hero-copy">
             <h1>
               One jersey.
-              <br />
-              <em>Every story.</em>
+              <span className="ds-hero-inline" aria-hidden="true">
+                {selected && <img src={selected.thumb} alt="" draggable="false" />}
+              </span>
+              <span className="ds-hero-line"><em>Every story.</em></span>
             </h1>
             <p className="ds-lede">
-              A single Blender-built GLB carries every print. Pick a design from the archive — the fabric
-              texture swaps live, the sleeves follow that design&apos;s accent, and the collar stays locked
-              to your colour code.
+              A single Blender-built GLB carries every print. Pick a kit from the archive and watch the
+              fabric swap live — sleeves follow that design&apos;s accent, collar stays locked to your code.
             </p>
             <div className="ds-hero-actions">
               <button
@@ -307,240 +398,310 @@ export default function DesignShowcase() {
                 {reducedMotion ? "MOTION REDUCED" : autoRotate ? "AUTO SPIN ON" : "AUTO SPIN OFF"}
               </button>
               <button type="button" className="button button-outline" onClick={resetView}>
+                <RotateCcw size={15} strokeWidth={1.8} aria-hidden="true" />
                 RESET VIEW
               </button>
-            </div>
-            <button type="button" className="ds-text-link" onClick={scrollToArchive}>
-              BROWSE THE ARCHIVE <span aria-hidden="true">↗</span>
-            </button>
-
-            <div className="ds-specs" aria-label="How this showcase works">
-              <div><b>01</b><span>GLB / all designs</span></div>
-              <div><b>02</b><span>Live texture swap</span></div>
-              <div><b>03</b><span>Fixed collar colour</span></div>
+              <button type="button" className="ds-text-link" onClick={scrollToArchive}>
+                BROWSE ARCHIVE <ArrowUpRight size={15} strokeWidth={1.8} aria-hidden="true" />
+              </button>
             </div>
           </div>
 
-          <div className="ds-viewer">
-            <div
-              ref={stageRef}
-              className={`ds-stage ${dragging ? "is-dragging" : ""}`}
-              role="group"
-              tabIndex={0}
-              aria-label="Interactive 3D jersey. Drag or use arrow keys to rotate."
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={endDrag}
-              onPointerCancel={endDrag}
-              onPointerLeave={handlePointerLeave}
-              onDoubleClick={resetView}
-              onKeyDown={handleKeyDown}
-            >
-              <div className="ds-stage-chrome" aria-hidden="true">
-                <span>LIVE / GLB</span>
-                <span>{selected ? selected.id.toUpperCase() : "STANDBY"}</span>
-              </div>
-              <Canvas
-                dpr={[1, 1.8]}
-                camera={{ fov: 30, position: [0, 0.1, 9], near: 0.1, far: 100 }}
-                gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
-                onCreated={({ gl }) => {
-                  gl.toneMapping = THREE.ACESFilmicToneMapping;
-                  gl.toneMappingExposure = 1.08;
-                }}
+          <div className="ds-console">
+            <div className="ds-console-stage">
+              <div
+                ref={stageRef}
+                className={`ds-stage ${dragging ? "is-dragging" : ""}`}
+                role="group"
+                tabIndex={0}
+                aria-label="Interactive 3D jersey. Drag or use arrow keys to rotate."
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                onPointerLeave={handlePointerLeave}
+                onDoubleClick={resetView}
+                onKeyDown={handleKeyDown}
               >
-                <Suspense fallback={null}>
-                  <StudioLights />
-                  {selected && (
-                    <TemplateJersey
-                      design={selected}
-                      start={loaded}
-                      autoRotate={autoRotate}
-                      spinRef={spin}
-                      introRef={intro}
-                      reducedMotion={reducedMotion}
-                      baseX={0}
-                      baseY={0}
-                      onLoaded={handleLoaded}
-                    />
-                  )}
-                </Suspense>
-              </Canvas>
-              {!loaded && <div className="ds-stage-status" role="status">LOADING 3D JERSEY…</div>}
-              <p className="ds-hint">DRAG TO ROTATE · ARROW KEYS ALSO WORK</p>
+                <div className="ds-stage-chrome" aria-hidden="true">
+                  <span>LIVE / GLB</span>
+                  <span>{selected ? selected.id.toUpperCase() : "STANDBY"}</span>
+                </div>
+                <Canvas
+                  dpr={[1, 1.8]}
+                  camera={{ fov: 30, position: [0, 0.1, 9], near: 0.1, far: 100 }}
+                  gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+                  onCreated={({ gl }) => {
+                    gl.toneMapping = THREE.ACESFilmicToneMapping;
+                    gl.toneMappingExposure = 1.08;
+                  }}
+                >
+                  <Suspense fallback={null}>
+                    <StudioLights />
+                    {selected && (
+                      <TemplateJersey
+                        design={selected}
+                        start={loaded}
+                        autoRotate={autoRotate}
+                        spinRef={spin}
+                        introRef={intro}
+                        reducedMotion={reducedMotion}
+                        baseX={0}
+                        baseY={0}
+                        onLoaded={handleLoaded}
+                      />
+                    )}
+                  </Suspense>
+                </Canvas>
+                {!loaded && <div className="ds-stage-status" role="status">LOADING 3D JERSEY</div>}
+                <p className="ds-hint">DRAG TO ROTATE / ARROW KEYS</p>
+                <span className="ds-cross ds-cross-tl" aria-hidden="true" />
+                <span className="ds-cross ds-cross-tr" aria-hidden="true" />
+                <span className="ds-cross ds-cross-bl" aria-hidden="true" />
+                <span className="ds-cross ds-cross-br" aria-hidden="true" />
+              </div>
+              <div className="ds-filmstrip" aria-label="Load a design into the studio">
+                {designs.map((design) => (
+                  <button
+                    type="button"
+                    key={design.id}
+                    className={`ds-frame ${selected?.id === design.id ? "is-active" : ""}`}
+                    onClick={() => selectDesign(design.id)}
+                    aria-pressed={selected?.id === design.id}
+                    aria-label={`View ${design.title}`}
+                  >
+                    <img src={design.thumb} alt="" loading="lazy" draggable="false" />
+                    <span style={{ background: design.accent }} aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <aside className="ds-detail">
-              <div className="ds-detail-main">
-                <span className="ds-detail-label">
-                  NOW VIEWING / {selected ? `${selectedIndex + 1} OF ${designs.length}` : "—"}
-                </span>
+            <aside className="ds-rail" aria-label="Studio readouts">
+              <div className="ds-rail-cell ds-rail-now">
+                <span className="ds-rail-key">NOW VIEWING</span>
                 {selected ? (
                   <>
-                    <h2>{selected.title}</h2>
-                    <p className="ds-detail-category">{selected.category} / {selected.id}</p>
+                    <strong>{selected.title}</strong>
+                    <span className="ds-rail-id">{selected.category} / {selected.id}</span>
+                    <span className="ds-rail-count">
+                      {String(selectedIndex + 1).padStart(2, "0")}
+                      <i>/</i>
+                      {String(designs.length).padStart(2, "0")}
+                    </span>
                   </>
                 ) : (
-                  <p className="ds-empty">{error ?? "Designs load ho rahe hain…"}</p>
+                  <span className="ds-empty">{error ?? "Designs load ho rahe hain…"}</span>
                 )}
               </div>
 
-              <div className="ds-swatches">
-                <div className="ds-swatch">
-                  <span>SLEEVE ACCENT</span>
-                  <i style={{ background: selected?.accent ?? "transparent" }} aria-hidden="true" />
-                  <code>{selected?.accent ?? "—"}</code>
-                </div>
-                <div className="ds-swatch">
-                  <span>COLLAR + PLACKET</span>
-                  <i style={{ background: collarColor }} aria-hidden="true" />
-                  <code>{collarColor}</code>
-                </div>
+              <div className="ds-rail-cell">
+                <span className="ds-rail-key">SLEEVE / ACCENT</span>
+                <code>{selected?.accent ?? "—"}</code>
+                <i className="ds-rail-swatch" style={{ background: selected?.accent ?? "transparent" }} aria-hidden="true" />
               </div>
 
-              <div className="ds-detail-actions">
-                <button
-                  type="button"
-                  className="button button-outline"
-                  onClick={() => stepDesign(-1)}
-                  disabled={!selected}
-                >
-                  ← PREV
+              <div className="ds-rail-cell">
+                <span className="ds-rail-key">COLLAR / PLACKET</span>
+                <code>{collarColor}</code>
+                <i className="ds-rail-swatch" style={{ background: collarColor }} aria-hidden="true" />
+              </div>
+
+              <div className="ds-rail-cell ds-rail-nav">
+                <button type="button" onClick={() => stepDesign(-1)} disabled={!selected} aria-label="Previous design">
+                  <ArrowLeft size={17} strokeWidth={1.7} aria-hidden="true" />
                 </button>
-                <button
-                  type="button"
-                  className="button button-orange"
-                  onClick={() => stepDesign(1)}
-                  disabled={!selected}
-                >
-                  NEXT →
+                <button type="button" onClick={() => stepDesign(1)} disabled={!selected} aria-label="Next design">
+                  <ArrowRight size={17} strokeWidth={1.7} aria-hidden="true" />
                 </button>
               </div>
             </aside>
           </div>
         </section>
 
-        <section className="ds-contract-strip" aria-label="Template mapping">
-          <span>MAIN DESIGN <b>design texture</b></span>
-          <span>SLEEVE END <b>design accent</b></span>
-          <span>COLLAR + PLACKET <b>settings.json</b></span>
-          <span>ONE GLB <b>every design</b></span>
+        <div className="ds-marquee" aria-label="Archive ticker">
+          <div className="ds-marquee-track">
+            {[0, 1].map((copy) => (
+              <div className="ds-marquee-group" key={copy} aria-hidden={copy === 1}>
+                {designs.map((design) => (
+                  <span key={`${copy}-${design.id}`}>
+                    {design.id.toUpperCase()} <i>/</i> {design.title}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <section className="ds-manifesto" aria-label="Studio principle">
+          <p>
+            {MANIFESTO.split(" ").map((word, index) => (
+              <span className="ds-manifesto-word" key={`${word}-${index}`}>{word} </span>
+            ))}
+          </p>
+        </section>
+
+        <dl className="ds-contract-strip" aria-label="Template mapping">
+          <div><dt>Main design</dt><dd>texture / webp</dd></div>
+          <div><dt>Sleeve end</dt><dd>accent / manifest</dd></div>
+          <div><dt>Collar + placket</dt><dd>hex / settings.json</dd></div>
+          <div><dt>Model</dt><dd>1 GLB / runtime</dd></div>
+        </dl>
+
+        <section className="ds-notes" aria-label="Studio notes">
+          <div className="ds-notes-stage">
+            {STUDIO_NOTES.map((item, index) => {
+              const thumb = designs.find((design) => design.category === item.key)?.thumb;
+              return (
+                <article
+                  className={`ds-note-card ${activeNote === index ? "is-active" : ""}`}
+                  key={item.id}
+                  style={{ "--stack-i": index } as CSSProperties}
+                >
+                  {thumb && <img src={thumb} alt="" loading="lazy" draggable="false" />}
+                  <div>
+                    <span className="ds-note-key">NOTE / {item.key.toUpperCase()}</span>
+                    <h3>{item.title}</h3>
+                    <p>{item.copy}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="ds-notes-controls">
+            <span>{String(activeNote + 1).padStart(2, "0")} / {String(STUDIO_NOTES.length).padStart(2, "0")}</span>
+            <button type="button" onClick={() => setActiveNote((value) => (value - 1 + STUDIO_NOTES.length) % STUDIO_NOTES.length)} aria-label="Previous studio note">
+              <ArrowLeft size={16} strokeWidth={1.7} aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => setActiveNote((value) => (value + 1) % STUDIO_NOTES.length)} aria-label="Next studio note">
+              <ArrowRight size={16} strokeWidth={1.7} aria-hidden="true" />
+            </button>
+          </div>
         </section>
 
         <section className="ds-archive" id="ds-archive">
-          <div className="ds-archive-head">
-            <div>
-              <p className="eyebrow">The archive / {designs.length.toString().padStart(3, "0")}</p>
+          <div className="ds-archive-grid">
+            <div className="ds-archive-pin" ref={archivePinRef}>
               <h2>Pick a <em>design.</em></h2>
               <p className="ds-archive-lede">
-                Click any artwork to load it on the 3D jersey above. No reload, no new model —
-                designs ab category-wise bhi millte hain.
+                Click any artwork to load it on the jersey above. No reload, no second model —
+                the archive is split into category rails.
               </p>
-            </div>
-            <div className="ds-filters" role="group" aria-label="Filter designs by category">
-              {FILTERS.map((filter) => (
-                <button
-                  type="button"
-                  key={filter}
-                  className={`filter${category === filter ? " active" : ""}`}
-                  data-text={filter.toUpperCase()}
-                  aria-pressed={category === filter}
-                  onClick={() => setCategory(filter)}
-                >
-                  <span>{filter.toUpperCase()}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {error && <p className="ds-error">{error}</p>}
-
-          <div className="ds-categories" id="ds-categories">
-            {category === "all" && (
-              <nav className="ds-category-jump" aria-label="Jump to a jersey category">
-                {CATEGORY_META.map((meta) => (
-                  <a
-                    key={meta.key}
-                    href={`#ds-cat-${meta.key}`}
-                    style={{ "--section-accent": meta.accent } as CSSProperties}
+              <div className="ds-filters" role="group" aria-label="Filter designs by category">
+                {FILTERS.map((filter) => (
+                  <button
+                    type="button"
+                    key={filter}
+                    className={`filter${category === filter ? " active" : ""}`}
+                    data-text={filter.toUpperCase()}
+                    aria-pressed={category === filter}
+                    onClick={() => setCategory(filter)}
                   >
-                    <b>{meta.index}</b>
-                    <span>{meta.label}</span>
-                    <small>{String(designs.filter((item) => item.category === meta.key).length).padStart(2, "0")} JERSEYS</small>
-                  </a>
+                    <span>{filter.toUpperCase()}</span>
+                  </button>
                 ))}
-              </nav>
-            )}
+              </div>
+              <span className="ds-archive-total">
+                {String(filtered.length).padStart(3, "0")} DESIGNS IN VIEW
+              </span>
+            </div>
 
-            <div className="ds-category-list">
-              {sections.map((section) => (
-                <section
-                  className="ds-category"
-                  id={`ds-cat-${section.key}`}
-                  key={section.key}
-                  style={{ "--section-accent": section.accent } as CSSProperties}
-                >
-                  <div className="ds-category-head">
-                    <div>
-                      <p className="eyebrow">{section.kicker}</p>
-                      <h3>{section.label} <em>jerseys.</em></h3>
-                      <p className="ds-category-copy">{section.copy}</p>
-                    </div>
-                    <div className="ds-category-count" aria-label={`${section.items.length} designs in ${section.label}`}>
-                      <b>{String(section.items.length).padStart(2, "0")}</b>
-                      <span>DESIGNS</span>
-                    </div>
-                  </div>
+            <div className="ds-archive-rail" ref={archiveScrollRef}>
+              <div className="ds-categories" id="ds-categories">
+                {error && <p className="ds-error">{error}</p>}
 
-                  {section.items.length > 0 ? (
-                    <div className="ds-grid">
-                      {section.items.map((design, index) => (
-                        <button
-                          type="button"
-                          key={design.id}
-                          className={`ds-card ${selected?.id === design.id ? "is-active" : ""}`}
-                          onClick={() => selectDesign(design.id)}
-                          aria-pressed={selected?.id === design.id}
+                {category === "all" && (
+                  <nav className="ds-category-jump" aria-label="Jump to a jersey category">
+                    {sections.map((meta) => {
+                      const thumb = designs.find((item) => item.category === meta.key)?.thumb;
+                      return (
+                        <a
+                          key={meta.key}
+                          href={`#ds-cat-${meta.key}`}
+                          style={{ "--section-accent": meta.accent } as CSSProperties}
                         >
-                          <span className="ds-card-index">{String(index + 1).padStart(2, "0")}</span>
-                          <span className="ds-card-arrow" aria-hidden="true">↗</span>
-                          <img src={design.thumb} alt={design.title} loading="lazy" />
-                          <span className="ds-card-info">
-                            <small>{design.category} / {design.id}</small>
-                            <strong>{design.title}</strong>
+                          {thumb && <img src={thumb} alt="" loading="lazy" draggable="false" />}
+                          <span className="ds-jump-text">
+                            <b>{meta.label}</b>
+                            <small>CAT / {meta.code} · {String(meta.items.length).padStart(2, "0")} KITS</small>
                           </span>
-                          <span className="ds-card-accent" style={{ background: design.accent }} aria-hidden="true" />
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="ds-category-empty">
-                      <div>
-                        <b>Coming soon.</b>
-                        <span>Is category me abhi koi published design nahi hai.</span>
+                          <ArrowUpRight size={15} strokeWidth={1.7} aria-hidden="true" />
+                        </a>
+                      );
+                    })}
+                  </nav>
+                )}
+
+                <div className="ds-category-list">
+                  {sections.map((section) => (
+                    <section
+                      className="ds-category"
+                      id={`ds-cat-${section.key}`}
+                      key={section.key}
+                      style={{ "--section-accent": section.accent } as CSSProperties}
+                    >
+                      <div className="ds-category-head">
+                        <h3>{section.label} <em>jerseys.</em></h3>
+                        <div className="ds-category-meta">
+                          <span>CAT / {section.code}</span>
+                          <span className="ds-category-count">
+                            <b>{String(section.items.length).padStart(2, "0")}</b>
+                            <i>DESIGNS</i>
+                          </span>
+                        </div>
                       </div>
-                      <a className="button button-outline" href="/#contact">START A DESIGN ↗</a>
-                    </div>
-                  )}
-                </section>
-              ))}
+                      <p className="ds-category-copy">{section.copy}</p>
+
+                      {section.items.length > 0 ? (
+                        <div className="ds-grid">
+                          {section.items.map((design, index) => (
+                            <button
+                              type="button"
+                              key={design.id}
+                              className={`ds-card ${selected?.id === design.id ? "is-active" : ""}`}
+                              onClick={() => selectDesign(design.id)}
+                              aria-pressed={selected?.id === design.id}
+                            >
+                              <span className="ds-card-media">
+                                <img src={design.thumb} alt={design.title} loading="lazy" />
+                                <span className="ds-card-index">{String(index + 1).padStart(2, "0")}</span>
+                                <span className="ds-card-arrow" aria-hidden="true"><ArrowUpRight size={17} strokeWidth={1.7} /></span>
+                              </span>
+                              <span className="ds-card-info">
+                                <small>{design.category} / {design.id}</small>
+                                <strong>{design.title}</strong>
+                              </span>
+                              <span className="ds-card-accent" style={{ background: design.accent }} aria-hidden="true" />
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="ds-category-empty">
+                          <div>
+                            <b>Coming soon.</b>
+                            <span>Is category me abhi koi published design nahi hai.</span>
+                          </div>
+                          <a className="button button-outline" href="/#contact">START A DESIGN <ArrowUpRight size={15} strokeWidth={1.8} aria-hidden="true" /></a>
+                        </div>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="ds-outro">
-          <div>
-            <p className="eyebrow">Your team next</p>
-            <h2>Want your own <em>design?</em></h2>
-          </div>
-          <a className="button button-orange" href="/#contact">START A DESIGN ↗</a>
+          <h2>Want your own <em>design?</em></h2>
+          <a className="button button-orange" href="/#contact">START A DESIGN <ArrowUpRight size={16} strokeWidth={1.8} aria-hidden="true" /></a>
         </section>
       </main>
 
       <footer className="ds-foot">
         <span>OM SAI SPORTS / DIGITAL FITTING STUDIO</span>
-        <span>ONE MODEL · LIVE TEXTURES · FIXED COLLAR</span>
-        <a href="/">BACK TO HOME ↗</a>
+        <span>ONE MODEL / LIVE TEXTURES / FIXED COLLAR</span>
+        <a href="/">BACK TO HOME <ArrowUpRight size={14} strokeWidth={1.8} aria-hidden="true" /></a>
       </footer>
     </div>
   );
