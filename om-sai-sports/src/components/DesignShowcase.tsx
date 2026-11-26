@@ -13,7 +13,7 @@ import { Environment, Lightformer } from "@react-three/drei";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowLeft, ArrowRight, ArrowUpRight, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Lock, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import TemplateJersey from "./TemplateJersey";
 import { getDesigns, type DesignCategory, type JerseyDesign } from "../lib/designs";
@@ -56,25 +56,25 @@ const CATEGORY_META: Array<{
   },
 ];
 
-const STUDIO_NOTES = [
+const WORKFLOW_CHANNELS = [
   {
-    id: "note-1",
-    key: "sports",
-    label: "LIVE SWAP",
+    id: "print",
+    label: "Print",
+    mapping: "texture / webp",
     title: "One fit, every design.",
-    copy: "Pick any artwork. The same jersey stays on screen while its print and sleeve colour change instantly — no reload, no second model.",
+    copy: "Pick any artwork. The same jersey stays on screen while its print changes instantly. No reload, no second model.",
   },
   {
-    id: "note-2",
-    key: "festival",
-    label: "SLEEVE ACCENT",
+    id: "sleeve",
+    label: "Sleeve end",
+    mapping: "accent / manifest",
     title: "Sleeves follow the design.",
     copy: "Every kit carries its own accent. That one colour updates the sleeve trim and the archive marker.",
   },
   {
-    id: "note-3",
-    key: "commercial",
-    label: "COLLAR LOCK",
+    id: "collar",
+    label: "Collar + placket",
+    mapping: "hex / settings.json",
     title: "Collar stays locked.",
     copy: "One code in settings.json controls the collar and placket on every kit. Edit it once and the whole archive follows.",
   },
@@ -119,9 +119,11 @@ export default function DesignShowcase() {
   const [autoRotate, setAutoRotate] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [collarColor, setCollarColor] = useState(DEFAULT_COLLAR_COLOR);
-  const [activeNote, setActiveNote] = useState(0);
+  const [activeChannel, setActiveChannel] = useState(0);
+  const [swapFlipped, setSwapFlipped] = useState(false);
 
   const siteRef = useRef<HTMLDivElement>(null);
+  const proofRef = useRef<HTMLDivElement>(null);
   const spin = useRef(createSpinState(0.35));
   const intro = useRef(0);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -171,6 +173,27 @@ export default function DesignShowcase() {
     document.title = "3D Jersey Studio — OM SAI SPORTS";
   }, []);
 
+  useEffect(() => {
+    const proof = proofRef.current;
+    if (reducedMotion || !proof) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        proof,
+        { autoAlpha: 0, x: 26 },
+        { autoAlpha: 1, x: 0, duration: 0.65, ease: "power3.out", overwrite: true },
+      );
+      const trace = proof.querySelector(".ds-channel-trace");
+      if (trace) {
+        gsap.fromTo(
+          trace,
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.55, ease: "power2.out", overwrite: true },
+        );
+      }
+    }, proof);
+    return () => ctx.revert();
+  }, [activeChannel, reducedMotion]);
+
   const filtered = category === "all" ? designs : designs.filter((item) => item.category === category);
   const sections = CATEGORY_META.map((meta) => ({
     ...meta,
@@ -179,6 +202,13 @@ export default function DesignShowcase() {
 
   const selected = designs.find((item) => item.id === selectedId) ?? designs[0] ?? null;
   const selectedIndex = selected ? designs.findIndex((item) => item.id === selected.id) : -1;
+  const printPair = [
+    designs.find((item) => item.category === "sports"),
+    designs.find((item) => item.category === "festival"),
+  ];
+  const accentSwatches = Array.from(
+    new Map(designs.map((item) => [item.accent, item])).values(),
+  ).slice(0, 4);
 
   useEffect(() => {
     if (!selected || selectedIndex < 0) return;
@@ -247,14 +277,15 @@ export default function DesignShowcase() {
       );
 
       gsap.fromTo(
-        ".ds-note-card",
-        { "--card-shift": 120 },
+        ".ds-channel-row",
+        { y: 44, opacity: 0.18 },
         {
-          "--card-shift": 0,
-          stagger: 0.14,
+          y: 0,
+          opacity: 1,
+          stagger: 0.09,
           ease: "none",
           scrollTrigger: {
-            trigger: ".ds-notes",
+            trigger: ".ds-workbench",
             start: "top 82%",
             end: "bottom 62%",
             scrub: 0.6,
@@ -268,6 +299,27 @@ export default function DesignShowcase() {
   );
 
   const handleLoaded = useCallback(() => setLoaded(true), []);
+
+  const handleChannelKey = useCallback(
+    (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+      let next = index;
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        next = (index + 1) % WORKFLOW_CHANNELS.length;
+      } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        next = (index - 1 + WORKFLOW_CHANNELS.length) % WORKFLOW_CHANNELS.length;
+      } else if (event.key === "Home") {
+        next = 0;
+      } else if (event.key === "End") {
+        next = WORKFLOW_CHANNELS.length - 1;
+      } else {
+        return;
+      }
+      event.preventDefault();
+      setActiveChannel(next);
+      document.getElementById(`ds-tab-${WORKFLOW_CHANNELS[next].id}`)?.focus();
+    },
+    [],
+  );
 
   const selectDesign = useCallback((id: string) => {
     setSelectedId(id);
@@ -556,51 +608,111 @@ export default function DesignShowcase() {
           </p>
         </section>
 
-        <dl className="ds-contract-strip" aria-label="Template mapping">
-          <div><dt>Main design</dt><dd>texture / webp</dd></div>
-          <div><dt>Sleeve end</dt><dd>accent / manifest</dd></div>
-          <div><dt>Collar + placket</dt><dd>hex / settings.json</dd></div>
-          <div><dt>Model</dt><dd>1 GLB / runtime</dd></div>
-        </dl>
-
-        <section className="ds-notes" aria-label="Studio notes">
-          <div className="ds-notes-stage">
-            {STUDIO_NOTES.map((item, index) => {
-              const thumb = designs.find((design) => design.category === item.key)?.thumb;
-              const swapA = designs.find((design) => design.category === "sports")?.thumb;
-              const swapB = designs.find((design) => design.category === "festival")?.thumb;
-              return (
-                <article
-                  className={`ds-note-card ${activeNote === index ? "is-active" : ""}`}
-                  key={item.id}
-                  style={{ "--stack-i": index } as CSSProperties}
-                >
-                  {item.id === "note-1" && swapA && swapB ? (
-                    <span className="ds-note-swap" aria-hidden="true">
-                      <img src={swapA} alt="" loading="lazy" draggable="false" />
-                      <span className="ds-note-swap-icon"><ArrowRight size={14} strokeWidth={1.8} /></span>
-                      <img src={swapB} alt="" loading="lazy" draggable="false" />
-                    </span>
-                  ) : thumb ? (
-                    <img src={thumb} alt="" loading="lazy" draggable="false" />
-                  ) : null}
-                  <div>
-                    <span className="ds-note-key">{item.label}</span>
-                    <h3>{item.title}</h3>
-                    <p>{item.copy}</p>
-                  </div>
-                </article>
-              );
-            })}
+        <section className="ds-workbench" aria-label="How one jersey carries every design">
+          <div className="ds-workbench-intro">
+            <h2>One jersey. <em>Three channels.</em></h2>
+            <p>Every kit in the studio is a value change, not a new garment. Open a channel to see what moves.</p>
           </div>
-          <div className="ds-notes-controls">
-            <span>{String(activeNote + 1).padStart(2, "0")} / {String(STUDIO_NOTES.length).padStart(2, "0")}</span>
-            <button type="button" onClick={() => setActiveNote((value) => (value - 1 + STUDIO_NOTES.length) % STUDIO_NOTES.length)} aria-label="Previous studio note">
-              <ArrowLeft size={16} strokeWidth={1.7} aria-hidden="true" />
-            </button>
-            <button type="button" onClick={() => setActiveNote((value) => (value + 1) % STUDIO_NOTES.length)} aria-label="Next studio note">
-              <ArrowRight size={16} strokeWidth={1.7} aria-hidden="true" />
-            </button>
+
+          <div className="ds-workbench-grid">
+            <div className="ds-channel-list" role="tablist" aria-label="Jersey channels" aria-orientation="vertical">
+              {WORKFLOW_CHANNELS.map((channel, index) => (
+                <button
+                  type="button"
+                  key={channel.id}
+                  id={`ds-tab-${channel.id}`}
+                  className={`ds-channel-row ${activeChannel === index ? "is-active" : ""}`}
+                  role="tab"
+                  aria-selected={activeChannel === index}
+                  aria-controls="ds-channel-panel"
+                  tabIndex={activeChannel === index ? 0 : -1}
+                  onClick={() => setActiveChannel(index)}
+                  onKeyDown={(event) => handleChannelKey(event, index)}
+                >
+                  <span className="ds-channel-label">{channel.label}</span>
+                  <span className="ds-channel-map">{channel.mapping}</span>
+                  <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />
+                </button>
+              ))}
+              <div className="ds-channel-row is-static">
+                <span className="ds-channel-label">Model</span>
+                <span className="ds-channel-map">1 GLB / runtime</span>
+              </div>
+            </div>
+
+            <div
+              className="ds-channel-panel"
+              id="ds-channel-panel"
+              role="tabpanel"
+              aria-labelledby={`ds-tab-${WORKFLOW_CHANNELS[activeChannel].id}`}
+              tabIndex={0}
+            >
+              <div className="ds-channel-proof" ref={proofRef}>
+                <span className="ds-channel-trace" aria-hidden="true" />
+
+                {activeChannel === 0 && (
+                  <div className={`ds-proof-swap ${swapFlipped ? "is-flipped" : ""}`}>
+                    {printPair[0] && printPair[1] ? (
+                      <>
+                        <img className="ds-proof-print" src={printPair[0].thumb} alt="" loading="lazy" draggable="false" />
+                        <img className="ds-proof-print ds-proof-print-next" src={printPair[1].thumb} alt="" loading="lazy" draggable="false" />
+                        <span className="ds-proof-seam-track" aria-hidden="true"><i /></span>
+                        <span className="ds-proof-caption">{swapFlipped ? printPair[1].title : printPair[0].title}</span>
+                        <button type="button" className="ds-proof-action" onClick={() => setSwapFlipped((value) => !value)}>
+                          Swap print <ArrowRight size={14} strokeWidth={1.8} aria-hidden="true" />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="ds-proof-empty">Artwork is loading.</span>
+                    )}
+                  </div>
+                )}
+
+                {activeChannel === 1 && (
+                  <div className="ds-proof-sleeve">
+                    <span className="ds-proof-accent-field" style={{ background: selected?.accent ?? "#ff5a00" }} aria-hidden="true" />
+                    <div className="ds-proof-accent-meta">
+                      <span className="ds-proof-hex">{selected?.accent ?? "#------"}</span>
+                      <div className="ds-proof-chips">
+                        {accentSwatches.map((design) => (
+                          <button
+                            type="button"
+                            key={design.id}
+                            className={`ds-proof-chip ${selected?.id === design.id ? "is-current" : ""}`}
+                            onClick={() => selectDesign(design.id)}
+                            aria-label={`Load ${design.title} on the jersey`}
+                          >
+                            <i style={{ background: design.accent }} aria-hidden="true" />
+                            {design.accent}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeChannel === 2 && (
+                  <div className="ds-proof-collar">
+                    <span className="ds-proof-collar-plate" style={{ background: collarColor }} aria-hidden="true" />
+                    <div className="ds-proof-collar-meta">
+                      <span className="ds-proof-hex">{collarColor}</span>
+                      <span className="ds-proof-lock">
+                        <Lock size={14} strokeWidth={1.6} aria-hidden="true" /> Locked on every kit
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="ds-channel-copy">
+                <h3>{WORKFLOW_CHANNELS[activeChannel].title}</h3>
+                <p>{WORKFLOW_CHANNELS[activeChannel].copy}</p>
+              </div>
+
+              <p className="ds-visually-hidden" role="status" aria-live="polite">
+                {WORKFLOW_CHANNELS[activeChannel].label} channel. {WORKFLOW_CHANNELS[activeChannel].title}
+              </p>
+            </div>
           </div>
         </section>
 
