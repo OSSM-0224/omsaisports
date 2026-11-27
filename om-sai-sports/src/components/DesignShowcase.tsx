@@ -360,7 +360,7 @@ export default function DesignShowcase() {
                         jerseyNumber: item.jerseyNumber || formatCount(index + 1),
                         colors: item.colors || [item.accent || section.accent, "#F4EFE6"],
                         specs: item.specs || [item.tag, "Custom design"],
-                        frontUrl: item.image,
+                        compositeUrl: item.image,
                         isNew: item.isNew,
                       };
                       return (

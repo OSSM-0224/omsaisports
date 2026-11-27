@@ -51,6 +51,11 @@ export default function DesignCard({ design, onOpen, className = "", eager = fal
   const frontAlt = `Front of jersey design ${design.designId}`;
   const backAlt = `Back of jersey design ${design.designId}`;
   const canFan = Boolean(design.backUrl || design.compositeUrl);
+  const isComposite = Boolean(design.compositeUrl && !design.frontUrl && !design.backUrl);
+  const frontRestX = isComposite ? -100 : -62;
+  const frontHoverX = isComposite ? -104 : -70;
+  const backRestX = isComposite ? 0 : -24;
+  const backHoverX = isComposite ? 4 : -14;
 
   useGSAP(
     () => {
@@ -87,16 +92,16 @@ export default function DesignCard({ design, onOpen, className = "", eager = fal
           }
         }
 
-        gsap.set(front, { xPercent: -62, yPercent: -50, rotation: 0, scale: 1 });
-        if (back) gsap.set(back, { xPercent: -24, yPercent: -48, rotation: 7, scale: 0.9, y: 0 });
+        gsap.set(front, { xPercent: frontRestX, yPercent: -50, rotation: 0, scale: 1 });
+        if (back) gsap.set(back, { xPercent: backRestX, yPercent: -48, rotation: isComposite ? 0 : 7, scale: isComposite ? 1 : 0.9, y: 0 });
         if (number) gsap.set(number, { x: 0 });
         gsap.set(arrow, { rotation: 0, backgroundColor: "transparent", borderColor: "rgba(244,239,230,0.25)", color: "#F4EFE6" });
 
         const tl = gsap.timeline({ paused: true, defaults: { overwrite: "auto" } });
-        tl.to(front, { xPercent: -64, duration: 0.06, ease: "power2.out" }, 0);
-        tl.to(front, { xPercent: -70, rotation: -4, duration: 0.34, ease: "back.out(1.3)" }, 0.06);
+        tl.to(front, { xPercent: frontHoverX + 2, duration: 0.06, ease: "power2.out" }, 0);
+        tl.to(front, { xPercent: frontHoverX, rotation: isComposite ? -3 : -4, duration: 0.34, ease: "back.out(1.3)" }, 0.06);
         if (back) {
-          tl.to(back, { xPercent: -14, yPercent: -50, rotation: 11, y: -8, scale: 0.9, duration: 0.34, ease: "back.out(1.3)" }, 0.06);
+          tl.to(back, { xPercent: backHoverX, yPercent: -50, rotation: isComposite ? 5 : 11, y: isComposite ? -6 : -8, scale: isComposite ? 1 : 0.9, duration: 0.34, ease: "back.out(1.3)" }, 0.06);
         }
         if (number) tl.to(number, { x: -10, duration: 0.3, ease: "power3.out" }, 0.06);
         tl.to(arrow, { rotation: 45, backgroundColor: "#FF5A00", borderColor: "#FF5A00", color: "#0C0C0D", duration: 0.24, ease: "power2.out" }, 0.04);
@@ -134,8 +139,8 @@ export default function DesignCard({ design, onOpen, className = "", eager = fal
 
       mm.add("(prefers-reduced-motion: reduce)", () => {
         gsap.set(card, { clearProps: "all", autoAlpha: 1, y: 0 });
-        gsap.set(front, { xPercent: -62, yPercent: -50, rotation: 0, scale: 1 });
-        if (back) gsap.set(back, { xPercent: -24, yPercent: -48, rotation: 7, scale: 0.9, y: 0 });
+        gsap.set(front, { xPercent: frontRestX, yPercent: -50, rotation: 0, scale: 1 });
+        if (back) gsap.set(back, { xPercent: backRestX, yPercent: -48, rotation: isComposite ? 0 : 7, scale: isComposite ? 1 : 0.9, y: 0 });
         if (number) gsap.set(number, { x: 0 });
         gsap.set(arrow, { rotation: 0, backgroundColor: "transparent", borderColor: "rgba(244,239,230,0.25)", color: "#F4EFE6" });
         tlRef.current = null;
