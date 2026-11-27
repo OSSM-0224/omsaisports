@@ -35,11 +35,13 @@ SOURCE_FOLDERS = (
 )
 THUMB_DIR = ROOT / "public" / "thumbnails"
 TEXTURE_DIR = ROOT / "public" / "designs" / "textures"
+TEMPLATE_ARCHIVE = ROOT / "design-sources" / "3d-textures"
 MANIFEST_PATH = ROOT / "public" / "designs" / "manifest.json"
 MAX_THUMB_WIDTH = 960
 TEXTURE_SIZE = 1400
 WEBP_QUALITY = 82
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
+RAW_TEMPLATE_SUFFIXES = {".png", ".jpg", ".jpeg"}
 
 
 def slugify(value: str) -> str:
@@ -109,8 +111,43 @@ def save_transparent_webp(image: Image.Image, output: Path, quality: int) -> Non
     rgba.save(output, "WEBP", quality=quality, method=6)
 
 
-def make_3d_texture(source: Path, design_id: str) -> str:
-    """Crop the front half of a front+back composite onto a square canvas."""
+def find_supplied_texture(design_id: str) -> Path | None:
+    """Find a hand-authored 3D template dropped into public/designs/<category>/."""
+    for category in ("sports", "festival", "commercial"):
+        folder = ROOT / "public" / "designs" / category
+        for suffix in sorted(RAW_TEMPLATE_SUFFIXES):
+            candidate = folder / f"{design_id}{suffix}"
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def fit_square(image: Image.Image) -> Image.Image:
+    image = image.convert("RGBA")
+    image.thumbnail((TEXTURE_SIZE, TEXTURE_SIZE), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (TEXTURE_SIZE, TEXTURE_SIZE), (0, 0, 0, 0))
+    canvas.paste(
+        image,
+        ((TEXTURE_SIZE - image.width) // 2, (TEXTURE_SIZE - image.height) // 2),
+    )
+    return canvas
+
+
+def make_3d_texture(source: Path, design_id: str, category: str) -> str:
+    """Prefer a supplied 3D template; otherwise crop the front of the composite."""
+    supplied = find_supplied_texture(design_id)
+
+    if supplied:
+        with Image.open(supplied) as original:
+            image = ImageOps.exif_transpose(original)
+            output = supplied.with_suffix(".webp")
+            save_transparent_webp(fit_square(image), output, quality=86)
+
+        # Keep the full resolution artwork out of public/ after it is optimized.
+        TEMPLATE_ARCHIVE.mkdir(parents=True, exist_ok=True)
+        supplied.replace(TEMPLATE_ARCHIVE / supplied.name)
+        return f"/designs/{category}/{design_id}.webp"
+
     TEXTURE_DIR.mkdir(parents=True, exist_ok=True)
     output = TEXTURE_DIR / f"{design_id}.webp"
 
@@ -130,13 +167,7 @@ def make_3d_texture(source: Path, design_id: str) -> str:
             )
             front = front.crop(padded)
 
-        front.thumbnail((TEXTURE_SIZE, TEXTURE_SIZE), Image.Resampling.LANCZOS)
-        canvas = Image.new("RGBA", (TEXTURE_SIZE, TEXTURE_SIZE), (0, 0, 0, 0))
-        canvas.paste(
-            front,
-            ((TEXTURE_SIZE - front.width) // 2, (TEXTURE_SIZE - front.height) // 2),
-        )
-        save_transparent_webp(canvas, output, quality=86)
+        save_transparent_webp(fit_square(front), output, quality=86)
 
     return f"/designs/textures/{design_id}.webp"
 
@@ -172,15 +203,18 @@ def main() -> None:
                 design["thumb"] = thumb_url
                 updated_thumbs += 1
             if not design.get("image"):
-                design["image"] = make_3d_texture(source, design_id)
+                design["image"] = make_3d_texture(
+                    source, design_id, design.get("category", "sports")
+                )
                 added_textures += 1
             continue
 
-        texture_url = make_3d_texture(source, design_id)
+        category = infer_category(source)
+        texture_url = make_3d_texture(source, design_id, category)
         entry = {
             "id": design_id,
             "title": title_from_slug(design_id),
-            "category": infer_category(source),
+            "category": category,
             "tag": "Jersey Design",
             "image": texture_url,
             "thumb": thumb_url,
