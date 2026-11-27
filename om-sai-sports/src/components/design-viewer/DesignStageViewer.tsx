@@ -43,8 +43,7 @@ import "./viewer.css";
 
 gsap.registerPlugin(useGSAP);
 
-type ViewMode = "3d" | "flat";
-type ControlId = CameraPreset | "spin" | "flat";
+type ControlId = CameraPreset | "spin";
 
 type Props = {
   design: ViewerDesign;
@@ -95,8 +94,6 @@ export default function DesignStageViewer({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const stageVisualRef = useRef<HTMLDivElement | null>(null);
-  const canvasLayerRef = useRef<HTMLDivElement | null>(null);
-  const flatLayerRef = useRef<HTMLDivElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const slipRef = useRef<HTMLDivElement | null>(null);
   const toastRef = useRef<HTMLDivElement | null>(null);
@@ -111,7 +108,6 @@ export default function DesignStageViewer({
 
   const reducedMotion = useReducedMotion();
   const canRender3D = useMemo(() => hasWebGL(), []);
-  const [viewMode, setViewMode] = useState<ViewMode>(() => (canRender3D ? "3d" : "flat"));
   const [activeControl, setActiveControl] = useState<ControlId>("front");
   const [activeHotspot, setActiveHotspot] = useState<HotspotId | null>(null);
   const [autoRotate, setAutoRotate] = useState(() => !reducedMotion && canRender3D);
@@ -183,7 +179,6 @@ export default function DesignStageViewer({
     hotspotRef.current = null;
     setActiveControl("front");
     setSlipOpen(false);
-    setViewMode((mode) => (canRender3D ? "3d" : mode));
     clearIdle();
     setAutoRotate(!reducedMotion && canRender3D);
     stageApi.current?.reset();
@@ -203,7 +198,6 @@ export default function DesignStageViewer({
   const setCamera = useCallback(
     (preset: CameraPreset) => {
       if (!canRender3D) return;
-      setViewMode("3d");
       setActiveHotspot(null);
       hotspotRef.current = null;
       setActiveControl(preset);
@@ -215,7 +209,6 @@ export default function DesignStageViewer({
   const selectHotspot = useCallback(
     (id: HotspotId | null) => {
       if (!canRender3D) return;
-      setViewMode("3d");
       setActiveHotspot(id);
       hotspotRef.current = id;
       clearIdle();
@@ -237,7 +230,6 @@ export default function DesignStageViewer({
     if (!canRender3D) return;
     spinRef.current = createSpinState(0.35);
     introRef.current = reducedMotion ? 1 : 0;
-    setViewMode("3d");
     setActiveControl("spin");
     setActiveHotspot(null);
     hotspotRef.current = null;
@@ -245,14 +237,6 @@ export default function DesignStageViewer({
     setAutoRotate(!reducedMotion);
     stageApi.current?.setView("home");
   }, [canRender3D, clearIdle, reducedMotion]);
-
-  const toggleFlat = useCallback(() => {
-    if (!canRender3D) return;
-    setViewMode((mode) => (mode === "3d" ? "flat" : "3d"));
-    setActiveControl("flat");
-    setActiveHotspot(null);
-    hotspotRef.current = null;
-  }, [canRender3D]);
 
   const showToast = useCallback((text: string) => {
     setToast({ id: Date.now(), text });
@@ -291,18 +275,16 @@ export default function DesignStageViewer({
     { id: "side", label: "SIDE", shortcut: "S", icon: MoveHorizontal, disabled: !canRender3D },
     { id: "spin", label: "SPIN 360", icon: RotateCw, disabled: !canRender3D },
     { id: "detail", label: "ZOOM DETAIL", icon: ZoomIn, disabled: !canRender3D },
-    { id: "flat", label: "FLAT / 3D", icon: ImageIcon, disabled: !canRender3D },
     { id: "home", label: "RESET VIEW", shortcut: "R", icon: RotateCcw, disabled: !canRender3D },
   ];
 
   const handleControl = useCallback(
     (id: ControlId) => {
       if (id === "spin") handleSpin();
-      else if (id === "flat") toggleFlat();
       else if (id === "home") resetView();
       else setCamera(id);
     },
-    [handleSpin, resetView, setCamera, toggleFlat],
+    [handleSpin, resetView, setCamera],
   );
 
   useEffect(() => {
@@ -413,27 +395,6 @@ export default function DesignStageViewer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [activeHotspot, changeDesign, designs, index, playClose, resetView, selectHotspot, setCamera, sheetExpanded, slipOpen]);
-
-  useGSAP(
-    () => {
-      const duration = reducedMotion ? 0 : 0.32;
-      if (canvasLayerRef.current) {
-        gsap.to(canvasLayerRef.current, {
-          autoAlpha: viewMode === "3d" ? 1 : 0,
-          duration,
-          ease: "power2.out",
-        });
-      }
-      if (flatLayerRef.current) {
-        gsap.to(flatLayerRef.current, {
-          autoAlpha: viewMode === "flat" ? 1 : 0,
-          duration,
-          ease: "power2.out",
-        });
-      }
-    },
-    { scope: rootRef, dependencies: [reducedMotion, viewMode] },
-  );
 
   useGSAP(
     () => {
@@ -548,7 +509,7 @@ export default function DesignStageViewer({
         >
           <div ref={stageVisualRef} className="dsv-stage-visual">
             <FloorRing madeFor={madeFor} />
-            <div ref={canvasLayerRef} className="dsv-stage-layer dsv-canvas-layer">
+            <div className="dsv-stage-layer dsv-canvas-layer">
               {canRender3D ? (
                 <ThreeStage
                   design={design}
@@ -569,16 +530,13 @@ export default function DesignStageViewer({
                 flatStage
               )}
             </div>
-            <div ref={flatLayerRef} className="dsv-stage-layer dsv-flat-layer" aria-hidden={viewMode !== "flat"}>
-              {flatStage}
-            </div>
             {!loaded ? <div className="dsv-loader">PREPARING STAGE</div> : null}
 
             <HotspotOverlay
               design={design}
               active={activeHotspot}
               reducedMotion={reducedMotion}
-              enabled={canRender3D && viewMode === "3d"}
+              enabled={canRender3D}
               registry={hotspotRegistry}
               onSelect={selectHotspot}
             />

@@ -343,15 +343,6 @@ body.dsv-open .cursor-thread {
   cursor: grabbing;
 }
 
-.dsv-flat-layer {
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .dsv-flat-stage {
   width: 100%;
   height: 100%;
@@ -471,10 +462,22 @@ body.dsv-open .cursor-thread {
   pointer-events: none;
 }
 
-.dsv-hotspot-wrap {
-  position: relative;
+.dsv-hotspot-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dsv-hotspot-point {
+  position: absolute;
+  left: 0;
+  top: 0;
   display: grid;
   place-items: center;
+  transform: translate3d(-9999px, -9999px, 0);
+  pointer-events: none;
 }
 
 .dsv-hotspot-dot {
@@ -486,6 +489,7 @@ body.dsv-open .cursor-thread {
   border: 1px solid rgba(247, 241, 233, 0.5);
   border-radius: 50%;
   background: rgba(12, 12, 13, 0.62);
+  pointer-events: auto;
   cursor: pointer;
 }
 
@@ -497,8 +501,9 @@ body.dsv-open .cursor-thread {
   box-shadow: 0 0 12px rgba(255, 90, 0, 0.75);
 }
 
-.dsv-hotspot-dot.is-active {
+.dsv-hotspot-point.is-active .dsv-hotspot-dot {
   border-color: var(--dsv-accent);
+  box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.14);
 }
 
 .dsv-hotspot-note {
@@ -513,6 +518,12 @@ body.dsv-open .cursor-thread {
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.48);
   visibility: hidden;
   opacity: 0;
+  pointer-events: none;
+}
+
+.dsv-hotspot-point[data-spot="side"] .dsv-hotspot-note {
+  left: auto;
+  right: 40px;
 }
 
 .dsv-hotspot-note b {

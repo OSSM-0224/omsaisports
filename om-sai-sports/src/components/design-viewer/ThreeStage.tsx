@@ -332,6 +332,7 @@ function Scene({
 
       <OrbitControls
         makeDefault
+        target={STAGE_CONFIG.camera.target}
         enableDamping
         dampingFactor={0.055}
         enablePan={false}

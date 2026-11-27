@@ -33,7 +33,7 @@ export type CameraPresetConfig = {
 export const STAGE_CONFIG = {
   jersey: {
     baseX: 0,
-    baseY: -0.15,
+    baseY: 1.17,
   },
   stand: {
     baseY: -0.48,
@@ -45,13 +45,13 @@ export const STAGE_CONFIG = {
     rimTube: 0.012,
   },
   camera: {
-    position: [0, 1.35, 7.4] as [number, number, number],
-    target: [0, 1.48, 0] as [number, number, number],
-    fov: 34,
-    minDistance: 1.6,
-    maxDistance: 4.8,
-    minPolarAngle: (65 * Math.PI) / 180,
-    maxPolarAngle: (100 * Math.PI) / 180,
+    position: [0, 1.3, 8] as [number, number, number],
+    target: [0, 1.17, 0] as [number, number, number],
+    fov: 36,
+    minDistance: 3.4,
+    maxDistance: 11.5,
+    minPolarAngle: (70 * Math.PI) / 180,
+    maxPolarAngle: (102 * Math.PI) / 180,
   },
   dust: {
     desktopCount: 40,
@@ -67,35 +67,35 @@ export const CAMERA_PRESETS: Record<CameraPreset, CameraPresetConfig> = {
     target: STAGE_CONFIG.camera.target,
   },
   front: {
-    position: [0, 1.35, 6.2],
-    target: [0, 1.48, 0],
+    position: [0, 1.3, 7.4],
+    target: [0, 1.17, 0],
   },
   back: {
-    position: [0, 1.35, -6.2],
-    target: [0, 1.48, 0],
+    position: [0, 1.3, -7.4],
+    target: [0, 1.17, 0],
   },
   side: {
-    position: [6, 1.45, 0.6],
-    target: [0, 1.48, 0],
+    position: [6.8, 1.3, 0.8],
+    target: [0, 1.17, 0],
   },
   detail: {
-    position: [0.25, 1.72, 4.35],
-    target: [0, 1.72, 0],
+    position: [0.2, 1.75, 5.6],
+    target: [0, 1.6, 0],
   },
   collar: {
-    position: [0.45, 2.5, 4.7],
+    position: [0.45, 2.55, 5.6],
     target: [0, 2.62, 0.12],
   },
   chest: {
-    position: [-0.7, 1.95, 4.9],
+    position: [-0.7, 1.95, 5.8],
     target: [-0.22, 1.9, 0.18],
   },
   sidePanel: {
-    position: [5.2, 1.42, 1.5],
+    position: [6, 1.42, 1.6],
     target: [0.52, 1.28, 0.05],
   },
   hem: {
-    position: [0.4, 0.72, 4.9],
+    position: [0.4, 0.72, 5.8],
     target: [0, 0.46, 0.16],
   },
 };
