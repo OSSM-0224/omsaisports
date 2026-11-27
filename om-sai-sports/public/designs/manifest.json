@@ -34,7 +34,16 @@
       "accent": "#8da8c1",
       "silhouette": "athletic",
       "image": "/designs/sports/nhps1.webp",
-      "thumb": "/designs/sports/nhps1.webp"
+      "thumb": "/thumbnails/sports/nhps1.png"
+    },
+    {
+      "id": "bvpt1",
+      "title": "BVPT — Sports Edition",
+      "category": "sports",
+      "accent": "#03707c",
+      "silhouette": "athletic",
+      "image": "/designs/sports/bvpt1.webp",
+      "thumb": "/thumbnails/sports/bvpt1.png"
     },
     {
       "id": "devi2",
@@ -43,7 +52,7 @@
       "accent": "#cbe6a0",
       "silhouette": "oversized",
       "image": "/designs/devi/devi2.webp",
-      "thumb": "/designs/devi/devi2.webp"
+      "thumb": "/thumbnails/sports/devi2.png"
     }
   ]
 }
