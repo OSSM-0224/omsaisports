@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import "../design-showcase.css";
 import { getDesigns, type JerseyDesign } from "../lib/designs";
@@ -27,18 +27,6 @@ function toCardDesign(design: JerseyDesign, index: number): DesignCardDesign {
   };
 }
 
-function toModalItem(design: JerseyDesign) {
-  return {
-    id: design.id,
-    title: design.title,
-    category: design.category,
-    tag: design.tag || "Jersey Design",
-    image: design.thumb,
-    designImage: design.image || design.thumb,
-    accent: design.accent,
-  };
-}
-
 function GallerySkeleton() {
   return (
     <div className="ds-gallery-grid" aria-hidden="true">
@@ -57,6 +45,18 @@ export default function DesignShowcase() {
   const [error, setError] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [activeItem, setActiveItem] = useState<JerseyDesign | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  const syncViewerUrl = useCallback((id: string | null) => {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("d", id);
+    else url.searchParams.delete("d");
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, []);
 
   const loadDesigns = useCallback(() => {
     setStatus("loading");
@@ -82,22 +82,46 @@ export default function DesignShowcase() {
   }, [loadDesigns]);
 
   useEffect(() => {
-    if (!activeItem) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setActiveItem(null);
-    };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [activeItem]);
+    if (status !== "ready" || activeItem) return;
+    const requested = new URLSearchParams(window.location.search).get("d");
+    if (!requested) return;
+    const found = designs.find((design) => design.id === requested);
+    if (found) {
+      openerRef.current = null;
+      setActiveItem(found);
+    }
+  }, [activeItem, designs, status]);
+
+  const openDesign = useCallback(
+    (design: JerseyDesign, opener: HTMLElement | null) => {
+      openerRef.current = opener;
+      setActiveItem(design);
+      syncViewerUrl(design.id);
+    },
+    [syncViewerUrl],
+  );
+
+  const closeDesign = useCallback(() => {
+    setActiveItem(null);
+    syncViewerUrl(null);
+  }, [syncViewerUrl]);
+
+  const selectDesign = useCallback(
+    (id: string) => {
+      const next = designs.find((design) => design.id === id);
+      if (!next) return;
+      setActiveItem(next);
+      syncViewerUrl(next.id);
+    },
+    [designs, syncViewerUrl],
+  );
 
   const visibleDesigns = useMemo(() => designs.slice(0, visibleCount), [designs, visibleCount]);
   const remaining = designs.length - visibleDesigns.length;
-  const activeModalItem = useMemo(() => (activeItem ? toModalItem(activeItem) : null), [activeItem]);
+  const activeIndex = useMemo(
+    () => (activeItem ? designs.findIndex((design) => design.id === activeItem.id) : -1),
+    [activeItem, designs],
+  );
 
   return (
     <div className="ds-site ds-archive-page">
@@ -161,10 +185,18 @@ export default function DesignShowcase() {
             <section className="ds-gallery" id="ds-archive" aria-label="Jersey designs">
               <div className="ds-gallery-grid">
                 {visibleDesigns.map((design, index) => (
-                  <div className="ds-gallery-cell" key={design.id}>
+                  <div
+                    className="ds-gallery-cell"
+                    key={design.id}
+                    onClickCapture={(event) => {
+                      const target = event.target as HTMLElement;
+                      openerRef.current =
+                        target.closest<HTMLElement>("[tabindex], button, a") || event.currentTarget;
+                    }}
+                  >
                     <DesignCard
                       design={toCardDesign(design, index)}
-                      onOpen={() => setActiveItem(design)}
+                      onOpen={() => openDesign(design, openerRef.current)}
                       eager={index < 4}
                     />
                   </div>
@@ -198,9 +230,16 @@ export default function DesignShowcase() {
         )}
       </main>
 
-      {activeModalItem ? (
-        <Suspense fallback={<div className="ds-preview"><div className="ds-preview-dialog ds-preview-dialog-3d ds-preview-fallback">Loading 3D view…</div></div>}>
-          <Design3DModal item={activeModalItem} onClose={() => setActiveItem(null)} />
+      {activeItem && activeIndex >= 0 ? (
+        <Suspense fallback={<div className="dsv-boot">PREPARING STAGE</div>}>
+          <Design3DModal
+            design={activeItem}
+            designs={designs}
+            index={activeIndex}
+            opener={openerRef.current}
+            onSelect={selectDesign}
+            onClose={closeDesign}
+          />
         </Suspense>
       ) : null}
     </div>
