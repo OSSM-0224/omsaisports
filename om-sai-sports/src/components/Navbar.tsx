@@ -12,7 +12,7 @@ type PillLink = { label: string; hash?: string; href?: string };
 
 const pillLinks: PillLink[] = [
   { label: "Designs", hash: "#designs" },
-  { label: "Categories", href: "/designs#ds-categories" },
+  { label: "Jerseys", href: "/designs" },
   { label: "Story", hash: "#story" },
   { label: "Clients", hash: "#clients" },
   { label: "Contact", hash: "#contact" }
@@ -44,14 +44,14 @@ const menuItems: MenuItem[] = [
     alt: "Custom teamwear design from the OM SAI SPORTS archive"
   },
   {
-    label: "Categories",
-    href: "/designs#ds-categories",
+    label: "Jerseys",
+    href: "/designs",
     number: "02",
-    tag: "BY DESIGN TYPE",
-    title: "Find your lane.",
-    copy: "Sports, festival or commercial — browse the archive in clean category rails and open any jersey in the 3D studio.",
+    tag: "THE ARCHIVE",
+    title: "See every design.",
+    copy: "Sports, festival and custom jerseys in one clean archive. Open any design and send us your order.",
     color: "#D8F26A",
-    image: "/designs/festival/ganpati1-thumb.webp",
+    image: "/thumbnails/nhps1.webp",
     alt: "Festival jersey design from the OM SAI SPORTS archive"
   },
   {
@@ -60,7 +60,7 @@ const menuItems: MenuItem[] = [
     number: "03",
     tag: "SINCE 2000",
     title: "One machine. One dream.",
-    copy: "Twenty-five years of making jerseys with a story — from a single machine to teams across the Navi Mumbai region.",
+    copy: "Twenty-five years of making jerseys with a story, from a single machine to teams across the Navi Mumbai region.",
     color: "#A9C7FF",
     image: "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=900&q=80",
     alt: "Sports team gathered on the field"
@@ -245,7 +245,7 @@ export default function Navbar() {
     <>
       <header className="site-head">
         <div className={`glass-pill${scrolled ? " is-scrolled" : ""}`}>
-          <a className="brand-lockup" href={isHome ? "#top" : "/"} aria-label="OM SAI SPORTS — back to home" data-cursor="HOME">
+          <a className="brand-lockup" href={isHome ? "#top" : "/"} aria-label="OM SAI SPORTS - back to home" data-cursor="HOME">
             <img
               className="brand-mark"
               src="/brand/oss-shield-sm.png"
@@ -347,7 +347,7 @@ export default function Navbar() {
               />
               OM SAI <em>SPORTS.</em>
             </a>
-            <span className="menu-meta">Navi Mumbai / India — time on the field</span>
+            <span className="menu-meta">Navi Mumbai / India - time on the field</span>
             <button className="menu-close" type="button" data-cursor="CLOSE" onClick={() => closeMenu()}>
               <span>Close</span>
               <span className="menu-close-icon"><X size={16} /></span>
@@ -356,7 +356,7 @@ export default function Navbar() {
 
           <div className="menu-body">
             <div className="menu-index">
-              <span className="menu-eyebrow">INDEX / 01—06</span>
+              <span className="menu-eyebrow">INDEX / 01-06</span>
               <nav className="menu-list" aria-label="Site sections">
                 {menuItems.map((item, index) => (
                   <a

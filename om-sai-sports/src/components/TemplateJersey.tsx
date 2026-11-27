@@ -149,6 +149,13 @@ export default function TemplateJersey({
     setTexture(null);
     setReady(false);
 
+    if (!design.image) {
+      setReady(true);
+      return () => {
+        active = false;
+      };
+    }
+
     loadDesignTexture(design.image, Math.min(8, anisotropy))
       .then((next) => {
         if (!active) return;

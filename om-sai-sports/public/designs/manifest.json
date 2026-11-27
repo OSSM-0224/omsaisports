@@ -2,57 +2,161 @@
   "designs": [
     {
       "id": "slhs-crest",
-      "title": "SLHS 24 — Xavier Edition",
+      "title": "SLHS 24 - Xavier Edition",
       "category": "sports",
+      "tag": "Sports Jersey",
+      "image": "/designs/sports/slhs-crest.webp",
+      "thumb": "/thumbnails/slhs-crest.webp",
       "accent": "#8d2438",
       "silhouette": "polo",
-      "image": "/designs/sports/slhs-crest.webp",
-      "thumb": "/designs/sports/slhs-crest.webp"
+      "madeFor": "SLHS",
+      "seasonYear": "2026",
+      "jerseyNumber": "24",
+      "colors": [
+        "#8d2438",
+        "#e8dcc0"
+      ],
+      "specs": [
+        "Polo collar",
+        "Raglan sleeves",
+        "Sublimation print"
+      ]
     },
     {
       "id": "ganpati1",
-      "title": "Ganpati — Festival Edition",
+      "title": "Ganpati Festival Edition",
       "category": "festival",
+      "tag": "Festival Jersey",
+      "image": "/designs/festival/ganpati1.webp",
+      "thumb": "/thumbnails/ganpati1.webp",
       "accent": "#000828",
       "silhouette": "oversized",
-      "image": "/designs/festival/ganpati1.webp",
-      "thumb": "/designs/festival/ganpati1-thumb.webp"
-    },
-    {
-      "id": "devi1",
-      "title": "Devi — Festival Edition",
-      "category": "festival",
-      "accent": "#ffffff",
-      "silhouette": "oversized",
-      "image": "/designs/festival/devi1.webp",
-      "thumb": "/designs/festival/devi1.webp"
+      "madeFor": "Ganpati Utsav",
+      "seasonYear": "2026",
+      "jerseyNumber": "01",
+      "colors": [
+        "#000828",
+        "#f4efe6"
+      ],
+      "specs": [
+        "Festival edition",
+        "Sublimation print",
+        "Custom artwork"
+      ]
     },
     {
       "id": "nhps1",
-      "title": "NHPS — Sports Edition",
+      "title": "NHPS Sports Edition",
       "category": "sports",
+      "tag": "Sports Jersey",
+      "image": "/designs/sports/nhps1.webp",
+      "thumb": "/thumbnails/nhps1.webp",
       "accent": "#8da8c1",
       "silhouette": "athletic",
-      "image": "/designs/sports/nhps1.webp",
-      "thumb": "/thumbnails/sports/nhps1.png"
+      "madeFor": "NHPS",
+      "seasonYear": "2026",
+      "jerseyNumber": "01",
+      "colors": [
+        "#8da8c1",
+        "#0d1533"
+      ],
+      "specs": [
+        "Sports kit",
+        "Sublimation print",
+        "Team identity"
+      ],
+      "isNew": true
     },
     {
       "id": "bvpt1",
-      "title": "BVPT — Sports Edition",
+      "title": "BVPT Sports Edition",
       "category": "sports",
+      "tag": "Sports Jersey",
+      "image": "/designs/sports/bvpt1.webp",
+      "thumb": "/thumbnails/bvpt1.webp",
       "accent": "#03707c",
       "silhouette": "athletic",
-      "image": "/designs/sports/bvpt1.webp",
-      "thumb": "/thumbnails/sports/bvpt1.png"
+      "madeFor": "BVPT",
+      "seasonYear": "2026",
+      "jerseyNumber": "01",
+      "colors": [
+        "#03707c",
+        "#f4efe6"
+      ],
+      "specs": [
+        "Sports kit",
+        "Sublimation print",
+        "Team identity"
+      ],
+      "isNew": true
+    },
+    {
+      "id": "devi1",
+      "title": "Devi Festival Edition",
+      "category": "festival",
+      "tag": "Festival Jersey",
+      "image": "/designs/festival/devi1.webp",
+      "thumb": "/thumbnails/devi1.webp",
+      "accent": "#ffffff",
+      "silhouette": "oversized",
+      "madeFor": "Devi Utsav",
+      "seasonYear": "2026",
+      "jerseyNumber": "01",
+      "colors": [
+        "#ffffff",
+        "#d4a017"
+      ],
+      "specs": [
+        "Festival edition",
+        "Sublimation print",
+        "Custom artwork"
+      ]
     },
     {
       "id": "devi2",
-      "title": "Devi — Festival Edition 02",
+      "title": "Devi Festival Edition 02",
       "category": "festival",
+      "tag": "Festival Jersey",
+      "image": "/designs/devi/devi2.webp",
+      "thumb": "/thumbnails/devi2.webp",
       "accent": "#cbe6a0",
       "silhouette": "oversized",
-      "image": "/designs/devi/devi2.webp",
-      "thumb": "/thumbnails/sports/devi2.png"
+      "madeFor": "Devi Utsav",
+      "seasonYear": "2026",
+      "jerseyNumber": "02",
+      "colors": [
+        "#e3f9c8",
+        "#0c0c0d"
+      ],
+      "specs": [
+        "Festival edition",
+        "Sublimation print",
+        "Custom artwork"
+      ],
+      "isNew": true
+    },
+    {
+      "id": "sahs1",
+      "title": "SAHS Sports Edition",
+      "category": "sports",
+      "tag": "Sports Jersey",
+      "thumb": "/thumbnails/sahs1.webp",
+      "accent": "#002080",
+      "silhouette": "athletic",
+      "madeFor": "SAHS",
+      "seasonYear": "2026",
+      "jerseyNumber": "01",
+      "colors": [
+        "#c0c0c0",
+        "#002080"
+      ],
+      "specs": [
+        "Sports kit",
+        "Sublimation print",
+        "Team identity"
+      ],
+      "isNew": true,
+      "image": "/designs/textures/sahs1.webp"
     }
   ]
 }

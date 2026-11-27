@@ -3,11 +3,18 @@ export type DesignCategory = "sports" | "festival" | "commercial";
 export interface JerseyDesign {
   id: string;
   title: string;
-  category: DesignCategory;
-  image: string;
+  category: string;
+  tag?: string;
   thumb: string;
-  accent: string;
+  image?: string;
+  accent?: string;
   silhouette?: "athletic" | "oversized" | "polo";
+  madeFor?: string;
+  seasonYear?: string;
+  jerseyNumber?: string;
+  colors?: string[];
+  specs?: string[];
+  isNew?: boolean;
 }
 
 interface DesignManifest {
@@ -19,7 +26,7 @@ let manifestPromise: Promise<JerseyDesign[]> | null = null;
 /** Loads the design manifest once. Adding a design only needs a manifest entry. */
 export function getDesigns(): Promise<JerseyDesign[]> {
   if (!manifestPromise) {
-    manifestPromise = fetch("/designs/manifest.json")
+    manifestPromise = fetch("/designs/manifest.json", { cache: "no-cache" })
       .then((response) => {
         if (!response.ok) throw new Error(`Design manifest failed: ${response.status}`);
         return response.json() as Promise<DesignManifest>;

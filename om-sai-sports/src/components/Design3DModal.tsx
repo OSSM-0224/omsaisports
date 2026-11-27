@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
-import { X, RotateCcw } from "lucide-react";
+import { ArrowUpRight, X, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import TemplateJersey from "./TemplateJersey";
 import { createSpinState, clamp } from "../lib/spin";
@@ -41,6 +41,7 @@ export default function Design3DModal({ item, onClose }: Props) {
 
   const categoryMap: Record<string, JerseyDesign["category"]> = {
     sports: "sports",
+    festival: "festival",
     ganpati: "festival",
     devi: "festival",
     commercial: "commercial",
@@ -143,7 +144,9 @@ export default function Design3DModal({ item, onClose }: Props) {
         </div>
         <div className="ds-preview-foot">
           <span>Drag to rotate</span>
-          <span>{item.accent?.toUpperCase() || "CUSTOM"}</span>
+          <a className="ds-preview-order" href="/#contact">
+            ORDER JERSEY <ArrowUpRight size={15} strokeWidth={1.8} aria-hidden="true" />
+          </a>
         </div>
       </div>
     </div>
