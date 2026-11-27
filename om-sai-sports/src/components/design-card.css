@@ -105,15 +105,16 @@
   -webkit-user-drag: none;
 }
 
+/* GSAP owns the jersey transforms in DesignCard.tsx.
+   Adding a CSS transform here would stack with GSAP and push the front half off-card. */
+
 .dc-jersey-front {
   z-index: 3;
-  transform: translate(-62%, -50%);
   filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.28));
 }
 
 .dc-jersey-back {
   z-index: 2;
-  transform: translate(-24%, -48%) scale(0.9) rotate(7deg);
   opacity: 0.95;
   filter: brightness(0.85) saturate(0.96) drop-shadow(0 14px 20px rgba(0, 0, 0, 0.24));
 }
@@ -129,12 +130,10 @@
 
 .dc-jersey-composite.dc-jersey-front {
   background-position: 0% 50%;
-  transform: translate(-100%, -50%);
 }
 
 .dc-jersey-composite.dc-jersey-back {
   background-position: 100% 50%;
-  transform: translate(0%, -48%);
 }
 
 .dc-floor {
