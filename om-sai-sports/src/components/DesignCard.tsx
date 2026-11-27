@@ -273,6 +273,8 @@ export default function DesignCard({ design, onOpen, className = "", eager = fal
         </div>
       </div>
 
+      {isComposite ? <span className="dc-sides" aria-hidden="true">Front · Back</span> : null}
+
       <div className="dc-top">
         <div className="dc-top-left">
           <span className="dc-chip">Made for {design.madeFor}</span>
